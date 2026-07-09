@@ -159,7 +159,10 @@
         "contentLabel": "Prompt text",
         "cancel": "Cancel",
         "save": "Save"
-      }
+      },
+      "new": "New Prompt",
+      "search": "Search prompts...",
+      "saved": "Prompt saved!"
     }
   },
   "threadHistory": {

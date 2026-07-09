@@ -132,7 +132,38 @@
       "title": "Panel de configuración",
       "customize": "Personaliza la configuración de tu chat aquí"
     },
-    "watermark": "Los LLM pueden cometer errores. Verifica la información importante."
+    "watermark": "Los LLM pueden cometer errores. Verifica la información importante.",
+    "promptGallery": {
+      "button": "Galería de prompts",
+      "title": "Galería de prompts",
+      "save": "Guardar prompt",
+      "saving": "Guardando...",
+      "edit": "Editar prompt",
+      "use": "Usar prompt",
+      "share": {
+        "title": "Compartir prompt",
+        "copy": "Copiar enlace",
+        "copied": "¡Enlace copiado!"
+      },
+      "unshare": "Dejar de compartir",
+      "delete": "Eliminar",
+      "copied": "¡Enlace copiado!",
+      "addToGallery": "Añadir a mi galería",
+      "added": "Prompt añadido a tu galería",
+      "empty": {
+        "title": "No hay prompts guardados",
+        "description": "Marca un mensaje para guardarlo como prompt"
+      },
+      "dialog": {
+        "titlePlaceholder": "Título del prompt",
+        "contentLabel": "Texto del prompt",
+        "cancel": "Cancelar",
+        "save": "Guardar"
+      },
+      "new": "Nuevo prompt",
+      "search": "Buscar prompts...",
+      "saved": "¡Prompt guardado!"
+    }
   },
   "threadHistory": {
     "sidebar": {

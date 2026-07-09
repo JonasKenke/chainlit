@@ -132,7 +132,38 @@
       "title": "设置面板",
       "customize": "在此自定义您的聊天设置"
     },
-    "watermark": "大语言模型可能会犯错。请核实重要信息。"
+    "watermark": "大语言模型可能会犯错。请核实重要信息。",
+    "promptGallery": {
+      "button": "提示词库",
+      "title": "提示词库",
+      "save": "保存提示词",
+      "saving": "保存中...",
+      "edit": "编辑提示词",
+      "use": "使用提示词",
+      "share": {
+        "title": "分享提示词",
+        "copy": "复制链接",
+        "copied": "链接已复制！"
+      },
+      "unshare": "取消分享",
+      "delete": "删除",
+      "copied": "链接已复制！",
+      "addToGallery": "添加到我的库",
+      "added": "提示词已添加到您的库",
+      "empty": {
+        "title": "没有保存的提示词",
+        "description": "收藏一条消息以将其保存为提示词"
+      },
+      "dialog": {
+        "titlePlaceholder": "提示词标题",
+        "contentLabel": "提示词内容",
+        "cancel": "取消",
+        "save": "保存"
+      },
+      "new": "新建提示词",
+      "search": "搜索提示词...",
+      "saved": "提示词已保存！"
+    }
   },
   "threadHistory": {
     "sidebar": {

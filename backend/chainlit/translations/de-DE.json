@@ -132,7 +132,38 @@
       "title": "Einstellungen",
       "customize": "Passe die Chat Einstellungen hier an"
     },
-    "watermark": "LLMs können Fehler machen. Überprüfe bitte stets die Inhalte."
+    "watermark": "LLMs können Fehler machen. Überprüfe bitte stets die Inhalte.",
+    "promptGallery": {
+      "button": "Prompt-Galerie",
+      "title": "Prompt-Galerie",
+      "save": "Prompt speichern",
+      "saving": "Wird gespeichert...",
+      "edit": "Prompt bearbeiten",
+      "use": "Prompt verwenden",
+      "share": {
+        "title": "Prompt teilen",
+        "copy": "Link kopieren",
+        "copied": "Link kopiert!"
+      },
+      "unshare": "Teilen aufheben",
+      "delete": "Löschen",
+      "copied": "Link kopiert!",
+      "addToGallery": "Zu meiner Galerie hinzufügen",
+      "added": "Prompt zu deiner Galerie hinzugefügt",
+      "empty": {
+        "title": "Keine gespeicherten Prompts",
+        "description": "Markiere eine Nachricht als Lesezeichen, um sie als Prompt zu speichern"
+      },
+      "dialog": {
+        "titlePlaceholder": "Prompt-Titel",
+        "contentLabel": "Prompt-Text",
+        "cancel": "Abbrechen",
+        "save": "Speichern"
+      },
+      "new": "Neuer Prompt",
+      "search": "Prompts suchen...",
+      "saved": "Prompt gespeichert!"
+    }
   },
   "threadHistory": {
     "sidebar": {
@@ -249,6 +280,12 @@
   "components": {
     "MultiSelectInput": {
       "placeholder": "Wähle aus..."
+    },
+    "DatePickerInput": {
+      "placeholder": {
+        "single": "Pick a date",
+        "range": "Pick a date range"
+      }
     }
   }
 }

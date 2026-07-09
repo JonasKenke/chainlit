@@ -94,7 +94,8 @@
       "actions": {
         "cancelUpload": "アップロードをキャンセル",
         "removeAttachment": "添付ファイルを削除"
-      }
+      },
+      "browse": "Browse Files"
     },
     "messages": {
       "status": {
@@ -131,7 +132,38 @@
       "title": "設定パネル",
       "customize": "ここでチャット設定をカスタマイズします"
     },
-    "watermark": "大規模言語モデルは間違いを犯す可能性があります。重要な情報については確認を検討してください。"
+    "watermark": "大規模言語モデルは間違いを犯す可能性があります。重要な情報については確認を検討してください。",
+    "promptGallery": {
+      "button": "プロンプトギャラリー",
+      "title": "プロンプトギャラリー",
+      "save": "プロンプトを保存",
+      "saving": "保存中...",
+      "edit": "プロンプトを編集",
+      "use": "プロンプトを使用",
+      "share": {
+        "title": "プロンプトを共有",
+        "copy": "リンクをコピー",
+        "copied": "リンクをコピーしました！"
+      },
+      "unshare": "共有を解除",
+      "delete": "削除",
+      "copied": "リンクをコピーしました！",
+      "addToGallery": "マイギャラリーに追加",
+      "added": "プロンプトをギャラリーに追加しました",
+      "empty": {
+        "title": "保存済みプロンプトなし",
+        "description": "メッセージをブックマークしてプロンプトとして保存してください"
+      },
+      "dialog": {
+        "titlePlaceholder": "プロンプトのタイトル",
+        "contentLabel": "プロンプトのテキスト",
+        "cancel": "キャンセル",
+        "save": "保存"
+      },
+      "new": "新しいプロンプト",
+      "search": "プロンプトを検索...",
+      "saved": "プロンプトを保存しました！"
+    }
   },
   "threadHistory": {
     "sidebar": {

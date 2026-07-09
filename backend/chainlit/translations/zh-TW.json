@@ -132,7 +132,38 @@
       "title": "設定面板",
       "customize": "在此自定義您的聊天設定"
     },
-    "watermark": "大型語言模型可能會犯錯。請核實重要資訊。"
+    "watermark": "大型語言模型可能會犯錯。請核實重要資訊。",
+    "promptGallery": {
+      "button": "提示詞庫",
+      "title": "提示詞庫",
+      "save": "儲存提示詞",
+      "saving": "儲存中...",
+      "edit": "編輯提示詞",
+      "use": "使用提示詞",
+      "share": {
+        "title": "分享提示詞",
+        "copy": "複製連結",
+        "copied": "連結已複製！"
+      },
+      "unshare": "取消分享",
+      "delete": "刪除",
+      "copied": "連結已複製！",
+      "addToGallery": "新增到我的庫",
+      "added": "提示詞已新增到您的庫",
+      "empty": {
+        "title": "沒有儲存的提示詞",
+        "description": "收藏一則訊息以將其儲存為提示詞"
+      },
+      "dialog": {
+        "titlePlaceholder": "提示詞標題",
+        "contentLabel": "提示詞內容",
+        "cancel": "取消",
+        "save": "儲存"
+      },
+      "new": "新建提示詞",
+      "search": "搜尋提示詞...",
+      "saved": "提示詞已儲存！"
+    }
   },
   "threadHistory": {
     "sidebar": {

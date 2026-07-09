@@ -13,8 +13,8 @@ import {
 } from '@chainlit/react-client';
 
 import AutoResizeTextarea from '@/components/AutoResizeTextarea';
-import { Pencil } from '@/components/icons/Pencil';
 import { BookmarkButton } from '@/components/chat/Messages/Message/Buttons/BookmarkButton';
+import { Pencil } from '@/components/icons/Pencil';
 import { Button } from '@/components/ui/button';
 import { Translator } from 'components/i18n';
 
@@ -67,46 +67,50 @@ const UserMessage = memo(function UserMessage({
       <InlinedElements elements={inlineElements} className="items-end" />
 
       <div className="flex flex-row items-center gap-1 w-full group">
-        {!isEditing && editable && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="edit-message ml-auto invisible group-hover:visible"
-            onClick={() => {
-              setEditValue(message.output);
-              setIsEditing(true);
-            }}
-            disabled={disabled}
-          >
-            <Pencil />
-          </Button>
-        )}
-        {!isEditing && favoritesEnabled && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              'favorite-message invisible group-hover:visible',
-              isFavorite ? 'visible text-yellow-500' : 'text-muted-foreground',
-              !editable && 'ml-auto'
-            )}
-            onClick={() => toggleMessageFavorite(message)}
-            disabled={disabled}
-          >
-            <Star className={cn('h-4 w-4', isFavorite ? 'fill-current' : '')} />
-          </Button>
-        )}
         {!isEditing && (
-          <div className="invisible group-hover:visible">
-            <BookmarkButton message={message} />
+          <div className="ml-auto flex items-center gap-1">
+            {editable && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="edit-message invisible group-hover:visible"
+                onClick={() => {
+                  setEditValue(message.output);
+                  setIsEditing(true);
+                }}
+                disabled={disabled}
+              >
+                <Pencil />
+              </Button>
+            )}
+            {favoritesEnabled && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  'favorite-message invisible group-hover:visible',
+                  isFavorite
+                    ? 'visible text-yellow-500'
+                    : 'text-muted-foreground'
+                )}
+                onClick={() => toggleMessageFavorite(message)}
+                disabled={disabled}
+              >
+                <Star
+                  className={cn('h-4 w-4', isFavorite ? 'fill-current' : '')}
+                />
+              </Button>
+            )}
+            <div className="invisible group-hover:visible">
+              <BookmarkButton message={message} />
+            </div>
           </div>
         )}
         <div
           className={cn(
             'px-5 py-2.5 relative bg-accent rounded-3xl',
             inlineElements.length ? 'rounded-tr-lg' : '',
-            isEditing ? 'w-full flex-grow' : 'max-w-[70%] flex-grow-0',
-            editable ? '' : 'ml-auto'
+            isEditing ? 'w-full flex-grow' : 'max-w-[70%] flex-grow-0'
           )}
         >
           {isEditing ? (

@@ -132,7 +132,38 @@
       "title": "Panneau des paramètres",
       "customize": "Personnalisez vos paramètres de chat ici"
     },
-    "watermark": "Les LLMs peuvent se tromper. Vérifiez les réponses."
+    "watermark": "Les LLMs peuvent se tromper. Vérifiez les réponses.",
+    "promptGallery": {
+      "button": "Galerie de prompts",
+      "title": "Galerie de prompts",
+      "save": "Enregistrer le prompt",
+      "saving": "Enregistrement...",
+      "edit": "Modifier le prompt",
+      "use": "Utiliser le prompt",
+      "share": {
+        "title": "Partager le prompt",
+        "copy": "Copier le lien",
+        "copied": "Lien copié !"
+      },
+      "unshare": "Ne plus partager",
+      "delete": "Supprimer",
+      "copied": "Lien copié !",
+      "addToGallery": "Ajouter à ma galerie",
+      "added": "Prompt ajouté à votre galerie",
+      "empty": {
+        "title": "Aucun prompt enregistré",
+        "description": "Ajoutez un signet à un message pour l'enregistrer comme prompt"
+      },
+      "dialog": {
+        "titlePlaceholder": "Titre du prompt",
+        "contentLabel": "Texte du prompt",
+        "cancel": "Annuler",
+        "save": "Enregistrer"
+      },
+      "new": "Nouveau prompt",
+      "search": "Rechercher des prompts...",
+      "saved": "Prompt enregistré !"
+    }
   },
   "threadHistory": {
     "sidebar": {

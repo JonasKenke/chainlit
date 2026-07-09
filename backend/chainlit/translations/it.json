@@ -132,7 +132,38 @@
       "title": "Impostazioni",
       "customize": "Personalizza le impostazioni della tua chat qui"
     },
-    "watermark": "Gli LLMS possono commettere errori. Verifica le info importanti."
+    "watermark": "Gli LLMS possono commettere errori. Verifica le info importanti.",
+    "promptGallery": {
+      "button": "Galleria prompt",
+      "title": "Galleria prompt",
+      "save": "Salva prompt",
+      "saving": "Salvataggio...",
+      "edit": "Modifica prompt",
+      "use": "Usa prompt",
+      "share": {
+        "title": "Condividi prompt",
+        "copy": "Copia link",
+        "copied": "Link copiato!"
+      },
+      "unshare": "Annulla condivisione",
+      "delete": "Elimina",
+      "copied": "Link copiato!",
+      "addToGallery": "Aggiungi alla mia galleria",
+      "added": "Prompt aggiunto alla tua galleria",
+      "empty": {
+        "title": "Nessun prompt salvato",
+        "description": "Aggiungi un segnalibro a un messaggio per salvarlo come prompt"
+      },
+      "dialog": {
+        "titlePlaceholder": "Titolo del prompt",
+        "contentLabel": "Testo del prompt",
+        "cancel": "Annulla",
+        "save": "Salva"
+      },
+      "new": "Nuovo prompt",
+      "search": "Cerca prompt...",
+      "saved": "Prompt salvato!"
+    }
   },
   "threadHistory": {
     "sidebar": {
@@ -249,6 +280,12 @@
   "components": {
     "MultiSelectInput": {
       "placeholder": "Seleziona..."
+    },
+    "DatePickerInput": {
+      "placeholder": {
+        "single": "Pick a date",
+        "range": "Pick a date range"
+      }
     }
   }
 }

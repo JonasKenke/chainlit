@@ -132,7 +132,38 @@
       "title": "Instellingenpaneel",
       "customize": "Pas hier je chatinstellingen aan"
     },
-    "watermark": "LLM's kunnen fouten maken. Overweeg het controleren van belangrijke informatie."
+    "watermark": "LLM's kunnen fouten maken. Overweeg het controleren van belangrijke informatie.",
+    "promptGallery": {
+      "button": "Promptgalerij",
+      "title": "Promptgalerij",
+      "save": "Prompt opslaan",
+      "saving": "Opslaan...",
+      "edit": "Prompt bewerken",
+      "use": "Prompt gebruiken",
+      "share": {
+        "title": "Prompt delen",
+        "copy": "Link kopiëren",
+        "copied": "Link gekopieerd!"
+      },
+      "unshare": "Delen ongedaan maken",
+      "delete": "Verwijderen",
+      "copied": "Link gekopieerd!",
+      "addToGallery": "Aan mijn galerij toevoegen",
+      "added": "Prompt toegevoegd aan je galerij",
+      "empty": {
+        "title": "Geen opgeslagen prompts",
+        "description": "Bladwijzer een bericht om het als prompt op te slaan"
+      },
+      "dialog": {
+        "titlePlaceholder": "Prompttitel",
+        "contentLabel": "Prompttekst",
+        "cancel": "Annuleren",
+        "save": "Opslaan"
+      },
+      "new": "Nieuwe prompt",
+      "search": "Prompts zoeken...",
+      "saved": "Prompt opgeslagen!"
+    }
   },
   "threadHistory": {
     "sidebar": {

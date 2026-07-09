@@ -132,7 +132,38 @@
       "title": "설정 패널",
       "customize": "여기에서 채팅 설정을 사용자 지정하세요"
     },
-    "watermark": "LLM은 실수할 수 있습니다. 중요한 정보는 확인하세요."
+    "watermark": "LLM은 실수할 수 있습니다. 중요한 정보는 확인하세요.",
+    "promptGallery": {
+      "button": "프롬프트 갤러리",
+      "title": "프롬프트 갤러리",
+      "save": "프롬프트 저장",
+      "saving": "저장 중...",
+      "edit": "프롬프트 편집",
+      "use": "프롬프트 사용",
+      "share": {
+        "title": "프롬프트 공유",
+        "copy": "링크 복사",
+        "copied": "링크가 복사되었습니다!"
+      },
+      "unshare": "공유 취소",
+      "delete": "삭제",
+      "copied": "링크가 복사되었습니다!",
+      "addToGallery": "내 갤러리에 추가",
+      "added": "프롬프트가 갤러리에 추가되었습니다",
+      "empty": {
+        "title": "저장된 프롬프트 없음",
+        "description": "메시지를 북마크하여 프롬프트로 저장하세요"
+      },
+      "dialog": {
+        "titlePlaceholder": "프롬프트 제목",
+        "contentLabel": "프롬프트 텍스트",
+        "cancel": "취소",
+        "save": "저장"
+      },
+      "new": "새 프롬프트",
+      "search": "프롬프트 검색...",
+      "saved": "프롬프트가 저장되었습니다!"
+    }
   },
   "threadHistory": {
     "sidebar": {
@@ -249,6 +280,12 @@
   "components": {
     "MultiSelectInput": {
       "placeholder": "선택..."
+    },
+    "DatePickerInput": {
+      "placeholder": {
+        "single": "Pick a date",
+        "range": "Pick a date range"
+      }
     }
   }
 }
