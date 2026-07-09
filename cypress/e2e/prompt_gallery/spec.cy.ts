@@ -102,6 +102,59 @@ describe('Prompt Gallery', () => {
     cy.contains('To Delete').should('not.exist');
   });
 
+  it('closing edit dialog returns to gallery, not the app', () => {
+    // Create a prompt to edit
+    cy.get('#prompt-gallery-open').click();
+    cy.get('#prompt-gallery-new').click();
+    cy.get('#prompt-title').type('Edit Me');
+    cy.get('#prompt-content').type('Original content');
+    cy.contains('button', 'Save').click();
+
+    // Open gallery and click edit
+    cy.get('#prompt-gallery-open').click();
+    cy.contains('Edit Me').should('be.visible');
+    cy.get('[aria-label="Edit prompt"]').first().click({ force: true });
+
+    // Edit dialog is open
+    cy.get('[role="dialog"]').contains('Edit Me').should('be.visible');
+
+    // Cancel the edit — gallery should reappear, not the bare app
+    cy.contains('button', 'Cancel').click();
+    cy.get('[role="dialog"]').contains('Prompt Gallery').should('be.visible');
+  });
+
+  it('add-via-shared-link navigates back to app after saving', () => {
+    // Create a prompt and share it — intercept to capture share URL
+    cy.get('#prompt-gallery-open').click();
+    cy.get('#prompt-gallery-new').click();
+    cy.get('#prompt-title').type('Shared Prompt');
+    cy.get('#prompt-content').type('Shared content');
+    cy.contains('button', 'Save').click();
+
+    // Intercept the share API call to grab the prompt ID
+    cy.intercept('POST', '/project/prompts/*/share').as('shareReq');
+    cy.get('#prompt-gallery-open').click();
+    cy.contains('Shared Prompt').should('be.visible');
+    // Click the copy/share icon (Copy icon button)
+    cy.get('[aria-label="Share Prompt"]').first().click({ force: true });
+
+    cy.wait('@shareReq').then((interception) => {
+      const shareUrl: string = interception.response?.body?.shareUrl;
+      expect(shareUrl).to.match(/^\/prompt\//);
+
+      // Navigate to the share page as if opening the link
+      cy.visit(shareUrl);
+      cy.contains('Shared Prompt').should('be.visible');
+      cy.contains('Shared content').should('be.visible');
+
+      // Add to gallery
+      cy.contains('button', 'Add to my gallery').click();
+
+      // Should redirect back to the home page
+      cy.url().should('eq', Cypress.config('baseUrl') + '/');
+    });
+  });
+
   it('can filter prompts by typing in search', () => {
     // Create two prompts
     cy.get('#prompt-gallery-open').click();

@@ -215,8 +215,12 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
           onSave={async (title, content) => {
             await editPrompt(editTarget.id, { title, content });
             setEditTarget(null);
+            setOpen(true);
           }}
-          onClose={() => setEditTarget(null)}
+          onClose={() => {
+            setEditTarget(null);
+            setOpen(true); // ponytail: reopen gallery when edit is cancelled/closed
+          }}
         />
       )}
 

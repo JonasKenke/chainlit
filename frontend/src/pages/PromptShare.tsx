@@ -54,6 +54,7 @@ export default function PromptSharePage() {
       await addSharedPrompt(id);
       setAdded(true);
       toast.success(t('chat.promptGallery.added'));
+      navigate('/'); // ponytail: go back to app after adding
     } catch {
       toast.error('Failed to add prompt');
     } finally {

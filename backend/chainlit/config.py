@@ -578,13 +578,34 @@ def init_config(log: bool = False):
     for file in os.listdir(TRANSLATIONS_DIR):
         if file.endswith(".json"):
             dst = os.path.join(config_translation_dir, file)
+            src = os.path.join(TRANSLATIONS_DIR, file)
+            with open(src, encoding="utf-8") as f:
+                pkg_translation = json.load(f)
             if not os.path.exists(dst):
-                src = os.path.join(TRANSLATIONS_DIR, file)
-                with open(src, encoding="utf-8") as f:
-                    translation = json.load(f)
+                with open(dst, "w", encoding="utf-8") as f:
+                    json.dump(pkg_translation, f, indent=4)
+                logger.info(f"Created default translation file at {dst}")
+            else:
+                # Merge: add any keys from the package that are missing in the app file
+                with open(dst, encoding="utf-8") as f:
+                    app_translation = json.load(f)
+
+                def _deep_merge(base: dict, additions: dict) -> tuple:
+                    added = False
+                    for k, v in additions.items():
+                        if k not in base:
+                            base[k] = v
+                            added = True
+                        elif isinstance(v, dict) and isinstance(base[k], dict):
+                            _, sub_added = _deep_merge(base[k], v)
+                            added = added or sub_added
+                    return base, added
+
+                merged, added = _deep_merge(app_translation, pkg_translation)
+                if added:
                     with open(dst, "w", encoding="utf-8") as f:
-                        json.dump(translation, f, indent=4)
-                        logger.info(f"Created default translation file at {dst}")
+                        json.dump(merged, f, indent=4)
+                    logger.info(f"Updated translation file with new keys at {dst}")
 
 
 def load_module(target: str, force_refresh: bool = False):

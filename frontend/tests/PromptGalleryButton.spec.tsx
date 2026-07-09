@@ -172,6 +172,47 @@ describe('PromptGalleryButton', () => {
     expect(getGalleryBtn()).toBeDisabled();
   });
 
+  it('reopens gallery when edit dialog is closed/cancelled', async () => {
+    (useConfig as any).mockReturnValue({ config: { promptGallery: true } });
+    renderComponent(samplePrompts);
+    // Open gallery
+    fireEvent.click(getGalleryBtn());
+    await waitFor(() => screen.getByText('Summarise'));
+    // Click edit on the prompt
+    const editBtn = screen.getByRole('button', {
+      name: 'chat.promptGallery.edit'
+    });
+    fireEvent.click(editBtn);
+    // Gallery closed, edit dialog open
+    await waitFor(() => screen.getByText('chat.promptGallery.save'));
+    // Cancel the edit dialog
+    fireEvent.click(
+      screen.getByRole('button', { name: 'chat.promptGallery.dialog.cancel' })
+    );
+    // Gallery should reopen
+    await waitFor(() =>
+      expect(screen.getByText('chat.promptGallery.title')).toBeInTheDocument()
+    );
+  });
+
+  it('reopens gallery after a successful edit save', async () => {
+    (useConfig as any).mockReturnValue({ config: { promptGallery: true } });
+    renderComponent(samplePrompts);
+    fireEvent.click(getGalleryBtn());
+    await waitFor(() => screen.getByText('Summarise'));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'chat.promptGallery.edit' })
+    );
+    await waitFor(() => screen.getByText('chat.promptGallery.save'));
+    // Save
+    fireEvent.click(
+      screen.getByRole('button', { name: 'chat.promptGallery.dialog.save' })
+    );
+    await waitFor(() =>
+      expect(screen.getByText('chat.promptGallery.title')).toBeInTheDocument()
+    );
+  });
+
   it('gallery stays open when New Prompt is clicked (save dialog stacks on top)', async () => {
     (useConfig as any).mockReturnValue({ config: { promptGallery: true } });
     renderComponent([]);
