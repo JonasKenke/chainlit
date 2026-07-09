@@ -52,7 +52,7 @@ export function BookmarkButton({ message }: Props) {
         initialContent={message.output}
         onSave={async (title, content) => {
           await savePrompt(title, content);
-          toast.success(t('chat.promptGallery.save'));
+          toast.success(t('chat.promptGallery.saved'));
         }}
         onClose={() => setDialogOpen(false)}
       />

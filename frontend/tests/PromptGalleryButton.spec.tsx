@@ -2,7 +2,8 @@ import {
   act,
   fireEvent,
   render,
-  screen
+  screen,
+  waitFor
 } from '@testing-library/react';
 import { RecoilRoot } from 'recoil';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -14,7 +15,24 @@ import { PromptGalleryButton } from '@/components/chat/MessageComposer/PromptGal
 const fetchPromptsMock = vi.fn().mockResolvedValue(undefined);
 const removePromptMock = vi.fn().mockResolvedValue(undefined);
 const sharePromptMock = vi.fn().mockResolvedValue('/prompt/some-id');
-const editPromptMock = vi.fn().mockResolvedValue({ id: 'p1', title: 'Updated', content: 'New content', userId: 'u1', isShared: false, createdAt: '', updatedAt: '' });
+const editPromptMock = vi.fn().mockResolvedValue({
+  id: 'p1',
+  title: 'Updated',
+  content: 'New content',
+  userId: 'u1',
+  isShared: false,
+  createdAt: '',
+  updatedAt: ''
+});
+const savePromptMock = vi.fn().mockResolvedValue({
+  id: 'p2',
+  title: 'New',
+  content: 'New content',
+  userId: 'u1',
+  isShared: false,
+  createdAt: '',
+  updatedAt: ''
+});
 
 vi.mock('@/components/i18n/Translator', () => ({
   default: ({ path }: { path: string }) => path,
@@ -28,11 +46,11 @@ vi.mock('@chainlit/react-client', async () => {
   return {
     useConfig: vi.fn(),
     usePromptGallery: () => ({
-      prompts: [],
       fetchPrompts: fetchPromptsMock,
       editPrompt: editPromptMock,
       removePrompt: removePromptMock,
-      sharePrompt: sharePromptMock
+      sharePrompt: sharePromptMock,
+      savePrompt: savePromptMock
     }),
     promptGalleryState: atom<IPrompt[]>({
       key: 'promptGalleryState_test',
@@ -66,11 +84,10 @@ describe('PromptGalleryButton', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   const renderComponent = (prompts = samplePrompts, props = {}) => {
@@ -91,45 +108,60 @@ describe('PromptGalleryButton', () => {
     expect(container.firstChild).toBeNull();
   });
 
+  const getGalleryBtn = () => document.getElementById('prompt-gallery-open')!;
+
   it('renders button when promptGallery is enabled', () => {
     (useConfig as any).mockReturnValue({ config: { promptGallery: true } });
     renderComponent();
-    expect(screen.getByRole('button')).toBeInTheDocument();
+    expect(getGalleryBtn()).toBeInTheDocument();
   });
 
-  it('shows empty state when gallery has no prompts', () => {
+  it('opens dialog on button click', async () => {
+    (useConfig as any).mockReturnValue({ config: { promptGallery: true } });
+    renderComponent();
+    fireEvent.click(getGalleryBtn());
+    await waitFor(() => {
+      expect(screen.getByText('chat.promptGallery.title')).toBeInTheDocument();
+    });
+  });
+
+  it('shows empty state when gallery has no prompts', async () => {
     (useConfig as any).mockReturnValue({ config: { promptGallery: true } });
     renderComponent([]);
-    fireEvent.click(screen.getByRole('button'));
-    expect(
-      screen.getByText('chat.promptGallery.empty.title')
-    ).toBeInTheDocument();
+    fireEvent.click(getGalleryBtn());
+    await waitFor(() => {
+      expect(
+        screen.getByText('chat.promptGallery.empty.title')
+      ).toBeInTheDocument();
+    });
   });
 
-  it('shows prompt list on open', () => {
+  it('shows prompt list on open', async () => {
     (useConfig as any).mockReturnValue({ config: { promptGallery: true } });
     renderComponent(samplePrompts);
-    fireEvent.click(screen.getByRole('button'));
-    expect(screen.getByText('Summarise')).toBeInTheDocument();
+    fireEvent.click(getGalleryBtn());
+    await waitFor(() => {
+      expect(screen.getByText('Summarise')).toBeInTheDocument();
+    });
   });
 
   it('calls fetchPrompts only once on first open', async () => {
     (useConfig as any).mockReturnValue({ config: { promptGallery: true } });
     renderComponent();
-    const btn = screen.getByRole('button');
-    // use real timers for this test since fetchPrompts is async
-    vi.useRealTimers();
-    fireEvent.click(btn); // open
-    await vi.waitUntil(() => fetchPromptsMock.mock.calls.length >= 1);
-    fireEvent.click(btn); // close
-    fireEvent.click(btn); // open again
+    fireEvent.click(getGalleryBtn());
+    await waitFor(() => expect(fetchPromptsMock).toHaveBeenCalledTimes(1));
+    // close via Escape
+    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent.click(getGalleryBtn());
+    await act(() => Promise.resolve());
     expect(fetchPromptsMock).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onSelect when a prompt is clicked', () => {
+  it('calls onSelect when a prompt is clicked', async () => {
     (useConfig as any).mockReturnValue({ config: { promptGallery: true } });
     renderComponent(samplePrompts);
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(getGalleryBtn());
+    await waitFor(() => screen.getByText('Summarise'));
     fireEvent.click(screen.getByText('Summarise'));
     expect(mockOnSelect).toHaveBeenCalledWith('Summarise this: {text}');
   });
@@ -137,19 +169,29 @@ describe('PromptGalleryButton', () => {
   it('respects disabled prop', () => {
     (useConfig as any).mockReturnValue({ config: { promptGallery: true } });
     renderComponent(samplePrompts, { disabled: true });
-    expect(screen.getByRole('button')).toBeDisabled();
+    expect(getGalleryBtn()).toBeDisabled();
   });
 
-  it('shows tooltip after hover delay', async () => {
+  it('gallery stays open when New Prompt is clicked (save dialog stacks on top)', async () => {
     (useConfig as any).mockReturnValue({ config: { promptGallery: true } });
-    renderComponent();
-    const btn = screen.getByRole('button');
-    fireEvent.mouseEnter(btn);
-    expect(
-      screen.queryByText('chat.promptGallery.button')
-    ).not.toBeInTheDocument();
-    act(() => vi.advanceTimersByTime(800));
-    const tips = screen.getAllByText('chat.promptGallery.button');
-    expect(tips.length).toBeGreaterThan(0);
+    renderComponent([]);
+    fireEvent.click(getGalleryBtn());
+    await waitFor(() => screen.getByText('chat.promptGallery.new'));
+    fireEvent.click(screen.getByText('chat.promptGallery.new'));
+    // Gallery title is still visible (gallery stays open)
+    expect(screen.getByText('chat.promptGallery.title')).toBeInTheDocument();
+    // Save dialog also opens on top
+    await waitFor(() => {
+      expect(screen.getByText('chat.promptGallery.save')).toBeInTheDocument();
+    });
+  });
+
+  it('shows New Prompt button in open dialog', async () => {
+    (useConfig as any).mockReturnValue({ config: { promptGallery: true } });
+    renderComponent([]);
+    fireEvent.click(getGalleryBtn());
+    await waitFor(() => {
+      expect(screen.getByText('chat.promptGallery.new')).toBeInTheDocument();
+    });
   });
 });

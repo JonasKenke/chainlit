@@ -1,10 +1,5 @@
 import { cn } from '@/lib/utils';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@radix-ui/react-popover';
-import { BookMarked, Copy, Pencil, Trash2 } from 'lucide-react';
+import { BookMarked, Copy, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 import { toast } from 'sonner';
@@ -23,17 +18,22 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
   CommandListScrollable
 } from '@/components/ui/command';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip';
-
-const TOOLTIP_DELAY_MS = 700;
 
 interface Props {
   disabled?: boolean;
@@ -44,49 +44,20 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
   const { config } = useConfig();
   const { t } = useTranslation();
   const prompts = useRecoilValue(promptGalleryState);
-  const { fetchPrompts, editPrompt, removePrompt, sharePrompt } =
+  const { fetchPrompts, editPrompt, removePrompt, sharePrompt, savePrompt } =
     usePromptGallery();
 
   const [open, setOpen] = useState(false);
-  const [tooltipOpen, setTooltipOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<IPrompt | null>(null);
-  const hoverTimerRef = useRef<number | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
-  useEffect(() => {
-    return () => {
-      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-    };
-  }, []);
-
-  // Fetch on first open
   const hasFetchedRef = useRef(false);
   useEffect(() => {
     if (open && !hasFetchedRef.current) {
       hasFetchedRef.current = true;
-      fetchPrompts().catch(() => null);
+      Promise.resolve(fetchPrompts()).catch(() => null);
     }
   }, [open, fetchPrompts]);
-
-  useEffect(() => {
-    if (open) cancelTooltipOpen();
-  }, [open]);
-
-  const scheduleTooltipOpen = () => {
-    if (disabled || open) return;
-    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-    hoverTimerRef.current = window.setTimeout(
-      () => setTooltipOpen(true),
-      TOOLTIP_DELAY_MS
-    );
-  };
-
-  const cancelTooltipOpen = () => {
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current);
-      hoverTimerRef.current = null;
-    }
-    setTooltipOpen(false);
-  };
 
   const handleShare = useCallback(
     async (prompt: IPrompt) => {
@@ -101,38 +72,25 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
   if (!config?.promptGallery) return null;
 
   return (
-    <div className={cn('prompt-gallery-popover-wrapper')}>
-      <Popover
-        open={open}
-        onOpenChange={(val) => {
-          setOpen(val);
-          if (val) cancelTooltipOpen();
-        }}
-      >
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
         <TooltipProvider>
-          <Tooltip open={!open && tooltipOpen}>
+          <Tooltip>
             <TooltipTrigger asChild>
-              <span
-                onMouseEnter={scheduleTooltipOpen}
-                onMouseLeave={cancelTooltipOpen}
-                onFocus={cancelTooltipOpen}
+              <Button
+                id="prompt-gallery-open"
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  'flex items-center h-9 px-3 rounded-full font-medium text-[13px] gap-1.5',
+                  'hover:bg-muted hover:dark:bg-muted transition-all duration-200',
+                  open && 'bg-muted/50'
+                )}
+                disabled={disabled}
+                onClick={() => setOpen(true)}
               >
-                <PopoverTrigger asChild>
-                  <Button
-                    id="prompt-gallery-open"
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      'flex items-center h-9 px-3 rounded-full font-medium text-[13px] gap-1.5',
-                      'hover:bg-muted hover:dark:bg-muted transition-all duration-200',
-                      open && 'bg-muted/50'
-                    )}
-                    disabled={disabled}
-                  >
-                    <BookMarked className="!size-5" />
-                  </Button>
-                </PopoverTrigger>
-              </span>
+                <BookMarked className="!size-5" />
+              </Button>
             </TooltipTrigger>
             <TooltipContent>
               <p>{t('chat.promptGallery.button')}</p>
@@ -140,15 +98,26 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
           </Tooltip>
         </TooltipProvider>
 
-        <PopoverContent
-          align="start"
-          sideOffset={12}
-          className="p-2 w-[340px] rounded-lg border shadow-md bg-background"
-        >
-          <Command>
-            <CommandListScrollable className="max-h-[360px] custom-scrollbar">
+        <DialogContent className="sm:max-w-2xl flex flex-col max-h-[80vh] gap-4">
+          <DialogHeader className="flex flex-row items-center justify-between pr-8">
+            <DialogTitle>{t('chat.promptGallery.title')}</DialogTitle>
+            <Button
+              id="prompt-gallery-new"
+              size="sm"
+              onClick={() => {
+                setCreateOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              {t('chat.promptGallery.new')}
+            </Button>
+          </DialogHeader>
+
+          <Command className="flex-1 overflow-hidden border rounded-md">
+            <CommandInput placeholder={t('chat.promptGallery.search')} />
+            <CommandListScrollable className="max-h-[50vh] custom-scrollbar">
               {prompts.length === 0 ? (
-                <CommandEmpty className="py-6 px-4">
+                <CommandEmpty className="py-8 px-4">
                   <div className="flex flex-col items-center gap-2 text-center">
                     <p className="text-sm font-medium text-foreground">
                       <Translator path="chat.promptGallery.empty.title" />
@@ -159,24 +128,23 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
                   </div>
                 </CommandEmpty>
               ) : (
-                <CommandGroup heading={t('chat.promptGallery.title')}>
+                <CommandGroup>
                   {prompts.map((prompt) => (
                     <CommandItem
                       key={prompt.id}
-                      value={prompt.id}
+                      value={`${prompt.title} ${prompt.content}`}
                       onSelect={() => {
                         onSelect(prompt.content);
                         setOpen(false);
-                        cancelTooltipOpen();
                       }}
-                      className="cursor-pointer group flex-col items-start"
+                      className="cursor-pointer flex-col items-start py-3"
                     >
                       <div className="flex items-start justify-between gap-2 w-full overflow-hidden">
-                        <div className="flex flex-col gap-0.5 overflow-hidden">
-                          <span className="truncate text-sm font-medium">
+                        <div className="flex flex-col gap-1 overflow-hidden">
+                          <span className="text-sm font-medium">
                             {prompt.title}
                           </span>
-                          <span className="truncate text-xs text-muted-foreground">
+                          <span className="line-clamp-2 text-xs text-muted-foreground whitespace-pre-wrap">
                             {prompt.content}
                           </span>
                         </div>
@@ -185,7 +153,7 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
                             aria-label={t('chat.promptGallery.edit')}
                             onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => {
@@ -200,7 +168,7 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
                             aria-label={t('chat.promptGallery.share.title')}
                             onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => {
@@ -216,7 +184,7 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
                             aria-label={t('chat.promptGallery.delete')}
                             onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => {
@@ -236,12 +204,12 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
               )}
             </CommandListScrollable>
           </Command>
-        </PopoverContent>
-      </Popover>
+        </DialogContent>
+      </Dialog>
 
-      {editTarget ? (
+      {editTarget && (
         <PromptSaveDialog
-          open={!!editTarget}
+          open
           initialTitle={editTarget.title}
           initialContent={editTarget.content}
           onSave={async (title, content) => {
@@ -250,8 +218,18 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
           }}
           onClose={() => setEditTarget(null)}
         />
-      ) : null}
-    </div>
+      )}
+
+      <PromptSaveDialog
+        open={createOpen}
+        onSave={async (title, content) => {
+          await savePrompt(title, content);
+          setCreateOpen(false);
+          toast.success(t('chat.promptGallery.saved'));
+        }}
+        onClose={() => setCreateOpen(false)}
+      />
+    </>
   );
 }
 
