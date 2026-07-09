@@ -34,7 +34,7 @@ from starlette.types import Receive, Scope, Send
 from typing_extensions import Annotated
 from watchfiles import awatch
 
-from chainlit.auth import create_jwt, decode_jwt, get_configuration, get_current_user
+from chainlit.auth import create_jwt, decode_jwt, get_configuration, get_current_user, require_login
 from chainlit.auth.cookie import (
     clear_auth_cookie,
     clear_oauth_state_cookie,
@@ -56,6 +56,7 @@ from chainlit.config import (
 )
 from chainlit.data import get_data_layer
 from chainlit.data.acl import is_thread_author
+from chainlit.data.base import BaseDataLayer
 from chainlit.logger import logger
 from chainlit.markdown import get_markdown_str
 from chainlit.oauth_providers import get_oauth_provider
@@ -64,14 +65,17 @@ from chainlit.types import (
     AskFileSpec,
     CallActionRequest,
     ConnectMCPRequest,
+    CreatePromptRequest,
     DeleteFeedbackRequest,
     DeleteThreadRequest,
     DisconnectMCPRequest,
     ElementRequest,
     GetThreadsRequest,
+    SharePromptRequest,
     ShareThreadRequest,
     Theme,
     UpdateFeedbackRequest,
+    UpdatePromptRequest,
     UpdateThreadRequest,
 )
 from chainlit.user import PersistedUser, User
@@ -872,6 +876,7 @@ async def project_settings(
                 getattr(cfg.features, "allow_thread_sharing", False)
                 and getattr(config.code, "on_shared_thread_view", None)
             ),
+            "promptGallery": bool(getattr(cfg.features, "prompt_gallery", False)),
             "markdown": markdown,
             "chatProfiles": profiles,
             "starters": starters,
@@ -1036,6 +1041,190 @@ async def get_shared_thread(
     metadata.pop("env", None)
     thread["metadata"] = metadata
     return JSONResponse(content=thread)
+
+
+# ---- Prompt Gallery endpoints ----
+
+
+async def _get_user_id(current_user: GenericUser, data_layer: "BaseDataLayer") -> str:
+    """Return the persisted user id, looking it up when current_user is an unpersisted User."""
+    if isinstance(current_user, PersistedUser):
+        return current_user.id
+    if current_user is None:
+        if require_login():
+            raise HTTPException(status_code=401, detail="Unauthorized")
+        # No-auth mode: use a stable anonymous user ID so prompt gallery works.
+        return "anonymous"
+    persisted = await data_layer.get_user(identifier=current_user.identifier)
+    if not persisted:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return persisted.id
+
+
+def _prompt_gallery_enabled() -> None:
+    """Raise 400 when the feature is disabled, to keep guards DRY."""
+    if not config.features.prompt_gallery:
+        raise HTTPException(
+            status_code=400, detail="Prompt gallery feature is not enabled"
+        )
+
+
+@router.get("/project/prompts")
+async def list_prompts(
+    request: Request,
+    current_user: UserParam,
+):
+    """List the current user's saved prompts."""
+    _prompt_gallery_enabled()
+    data_layer = get_data_layer()
+    if not data_layer:
+        raise HTTPException(status_code=400, detail="Data persistence is not enabled")
+    prompts = await data_layer.list_prompts(
+        await _get_user_id(current_user, data_layer)
+    )
+    return JSONResponse(content=prompts)
+
+
+@router.post("/project/prompts")
+async def create_prompt(
+    request: Request,
+    payload: CreatePromptRequest,
+    current_user: UserParam,
+):
+    """Save a new prompt to the gallery."""
+    _prompt_gallery_enabled()
+    data_layer = get_data_layer()
+    if not data_layer:
+        raise HTTPException(status_code=400, detail="Data persistence is not enabled")
+    import uuid as _uuid
+
+    now = utc_now()
+    prompt = {
+        "id": str(_uuid.uuid4()),
+        "title": payload.title,
+        "content": payload.content,
+        "userId": await _get_user_id(current_user, data_layer),
+        "isShared": False,
+        "createdAt": now,
+        "updatedAt": now,
+    }
+    created = await data_layer.create_prompt(prompt)  # type: ignore[arg-type]
+    return JSONResponse(content=created)
+
+
+@router.put("/project/prompts/{prompt_id}")
+async def update_prompt(
+    request: Request,
+    prompt_id: str,
+    payload: UpdatePromptRequest,
+    current_user: UserParam,
+):
+    """Edit a prompt (author only)."""
+    _prompt_gallery_enabled()
+    data_layer = get_data_layer()
+    if not data_layer:
+        raise HTTPException(status_code=400, detail="Data persistence is not enabled")
+    user_id = await _get_user_id(current_user, data_layer)
+    existing = await data_layer.get_prompt(prompt_id)
+    if not existing or existing["userId"] != user_id:
+        raise HTTPException(status_code=404, detail="Prompt not found")
+    updated = dict(existing)
+    if payload.title is not None:
+        updated["title"] = payload.title
+    if payload.content is not None:
+        updated["content"] = payload.content
+    updated["updatedAt"] = utc_now()
+    result = await data_layer.update_prompt(updated)  # type: ignore[arg-type]
+    return JSONResponse(content=result)
+
+
+@router.delete("/project/prompts/{prompt_id}")
+async def delete_prompt(
+    request: Request,
+    prompt_id: str,
+    current_user: UserParam,
+):
+    """Delete a prompt (author only)."""
+    _prompt_gallery_enabled()
+    data_layer = get_data_layer()
+    if not data_layer:
+        raise HTTPException(status_code=400, detail="Data persistence is not enabled")
+    deleted = await data_layer.delete_prompt(
+        prompt_id, await _get_user_id(current_user, data_layer)
+    )
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Prompt not found")
+    return JSONResponse(content={"success": True})
+
+
+@router.post("/project/prompts/{prompt_id}/share")
+async def share_prompt(
+    request: Request,
+    prompt_id: str,
+    payload: SharePromptRequest,
+    current_user: UserParam,
+):
+    """Toggle sharing of a prompt (author only). Returns share URL."""
+    _prompt_gallery_enabled()
+    data_layer = get_data_layer()
+    if not data_layer:
+        raise HTTPException(status_code=400, detail="Data persistence is not enabled")
+    user_id = await _get_user_id(current_user, data_layer)
+    existing = await data_layer.get_prompt(prompt_id)
+    if not existing or existing["userId"] != user_id:
+        raise HTTPException(status_code=404, detail="Prompt not found")
+    updated = dict(existing)
+    updated["isShared"] = payload.isShared
+    updated["updatedAt"] = utc_now()
+    result = await data_layer.update_prompt(updated)  # type: ignore[arg-type]
+    return JSONResponse(content={"prompt": result, "shareUrl": f"/prompt/{prompt_id}"})
+
+
+@router.get("/project/prompt/share/{prompt_id}")
+async def get_shared_prompt(
+    request: Request,
+    prompt_id: str,
+    current_user: UserParam,
+):
+    """Fetch a shared prompt (no auth required). Returns 404 if not shared."""
+    _prompt_gallery_enabled()
+    data_layer = get_data_layer()
+    if not data_layer:
+        raise HTTPException(status_code=400, detail="Data persistence is not enabled")
+    prompt = await data_layer.get_prompt(prompt_id)
+    if not prompt or not prompt["isShared"]:
+        raise HTTPException(status_code=404, detail="Prompt not found")
+    return JSONResponse(content=prompt)
+
+
+@router.post("/project/prompt/share/{prompt_id}/add")
+async def add_shared_prompt(
+    request: Request,
+    prompt_id: str,
+    current_user: UserParam,
+):
+    """Copy a shared prompt into the authenticated user's gallery."""
+    _prompt_gallery_enabled()
+    data_layer = get_data_layer()
+    if not data_layer:
+        raise HTTPException(status_code=400, detail="Data persistence is not enabled")
+    source = await data_layer.get_prompt(prompt_id)
+    if not source or not source["isShared"]:
+        raise HTTPException(status_code=404, detail="Prompt not found")
+    import uuid as _uuid
+
+    now = utc_now()
+    copy = {
+        "id": str(_uuid.uuid4()),
+        "title": source["title"],
+        "content": source["content"],
+        "userId": await _get_user_id(current_user, data_layer),
+        "isShared": False,
+        "createdAt": now,
+        "updatedAt": now,
+    }
+    created = await data_layer.create_prompt(copy)  # type: ignore[arg-type]
+    return JSONResponse(content=created)
 
 
 @router.get("/project/thread/{thread_id}/element/{element_id}")

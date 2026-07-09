@@ -81,6 +81,7 @@ export interface IChainlitConfig {
     user_message_markdown?: boolean;
     edit_message?: boolean;
     favorites?: boolean;
+    prompt_gallery?: boolean;
     mcp?: {
       enabled?: boolean;
       sse?: {
@@ -100,6 +101,7 @@ export interface IChainlitConfig {
   dataPersistence: boolean;
   threadResumable: boolean;
   threadSharing?: boolean;
+  promptGallery?: boolean;
   chatProfiles: ChatProfile[];
   starters?: IStarter[];
   starterCategories?: IStarterCategory[];

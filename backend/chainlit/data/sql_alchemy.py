@@ -24,6 +24,7 @@ from chainlit.types import (
     PageInfo,
     PaginatedResponse,
     Pagination,
+    PromptDict,
     ThreadDict,
     ThreadFilter,
 )
@@ -951,3 +952,118 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         if self.storage_provider:
             await self.storage_provider.close()
         await self.engine.dispose()
+
+    # ---- Prompt Gallery ----
+
+    async def _ensure_prompts_table(self) -> None:
+        """Create the prompts table if it doesn't exist (lazy migration)."""
+        await self.execute_sql(
+            """
+            CREATE TABLE IF NOT EXISTS prompts (
+                "id"          TEXT PRIMARY KEY,
+                "userId"      TEXT NOT NULL,
+                "title"       TEXT NOT NULL,
+                "content"     TEXT NOT NULL,
+                "isShared"    BOOLEAN NOT NULL DEFAULT FALSE,
+                "createdAt"   TEXT NOT NULL,
+                "updatedAt"   TEXT NOT NULL
+            )
+            """,
+            {},
+        )
+
+    async def create_prompt(self, prompt: PromptDict) -> PromptDict:
+        if self.show_logger:
+            logger.info(f"SQLAlchemy: create_prompt, id={prompt['id']}")
+        await self._ensure_prompts_table()
+        await self.execute_sql(
+            """
+            INSERT INTO prompts ("id", "userId", "title", "content", "isShared", "createdAt", "updatedAt")
+            VALUES (:id, :userId, :title, :content, :isShared, :createdAt, :updatedAt)
+            """,
+            {
+                "id": prompt["id"],
+                "userId": prompt["userId"],
+                "title": prompt["title"],
+                "content": prompt["content"],
+                "isShared": prompt["isShared"],
+                "createdAt": prompt["createdAt"],
+                "updatedAt": prompt["updatedAt"],
+            },
+        )
+        return prompt
+
+    async def list_prompts(self, user_id: str) -> List[PromptDict]:
+        if self.show_logger:
+            logger.info(f"SQLAlchemy: list_prompts, user_id={user_id}")
+        await self._ensure_prompts_table()
+        result = await self.execute_sql(
+            'SELECT * FROM prompts WHERE "userId" = :user_id ORDER BY "createdAt" DESC',
+            {"user_id": user_id},
+        )
+        if not isinstance(result, list):
+            return []
+        return [
+            PromptDict(
+                id=row["id"],
+                userId=row["userId"],
+                title=row["title"],
+                content=row["content"],
+                isShared=bool(row["isShared"]),
+                createdAt=row["createdAt"],
+                updatedAt=row["updatedAt"],
+            )
+            for row in result
+        ]
+
+    async def get_prompt(self, prompt_id: str) -> Optional[PromptDict]:
+        if self.show_logger:
+            logger.info(f"SQLAlchemy: get_prompt, id={prompt_id}")
+        await self._ensure_prompts_table()
+        result = await self.execute_sql(
+            'SELECT * FROM prompts WHERE "id" = :id',
+            {"id": prompt_id},
+        )
+        if not isinstance(result, list) or not result:
+            return None
+        row = result[0]
+        return PromptDict(
+            id=row["id"],
+            userId=row["userId"],
+            title=row["title"],
+            content=row["content"],
+            isShared=bool(row["isShared"]),
+            createdAt=row["createdAt"],
+            updatedAt=row["updatedAt"],
+        )
+
+    async def update_prompt(self, prompt: PromptDict) -> PromptDict:
+        if self.show_logger:
+            logger.info(f"SQLAlchemy: update_prompt, id={prompt['id']}")
+        await self._ensure_prompts_table()
+        await self.execute_sql(
+            """
+            UPDATE prompts
+            SET "title" = :title, "content" = :content, "isShared" = :isShared, "updatedAt" = :updatedAt
+            WHERE "id" = :id AND "userId" = :userId
+            """,
+            {
+                "id": prompt["id"],
+                "userId": prompt["userId"],
+                "title": prompt["title"],
+                "content": prompt["content"],
+                "isShared": prompt["isShared"],
+                "updatedAt": prompt["updatedAt"],
+            },
+        )
+        return prompt
+
+    async def delete_prompt(self, prompt_id: str, user_id: str) -> bool:
+        if self.show_logger:
+            logger.info(f"SQLAlchemy: delete_prompt, id={prompt_id}")
+        await self._ensure_prompts_table()
+        result = await self.execute_sql(
+            'DELETE FROM prompts WHERE "id" = :id AND "userId" = :user_id',
+            {"id": prompt_id, "user_id": user_id},
+        )
+        return isinstance(result, int) and result > 0

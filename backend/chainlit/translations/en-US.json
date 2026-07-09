@@ -132,7 +132,35 @@
       "title": "Settings panel",
       "customize": "Customize your chat settings here"
     },
-    "watermark": "LLMs can make mistakes. Check important info."
+    "watermark": "LLMs can make mistakes. Check important info.",
+    "promptGallery": {
+      "button": "Prompt gallery",
+      "title": "Prompt Gallery",
+      "save": "Save prompt",
+      "saving": "Saving...",
+      "edit": "Edit prompt",
+      "use": "Use prompt",
+      "share": {
+        "title": "Share Prompt",
+        "copy": "Copy link",
+        "copied": "Link copied!"
+      },
+      "unshare": "Unshare",
+      "delete": "Delete",
+      "copied": "Link copied!",
+      "addToGallery": "Add to my gallery",
+      "added": "Prompt added to your gallery",
+      "empty": {
+        "title": "No Saved Prompts",
+        "description": "Bookmark a message to save it as a prompt"
+      },
+      "dialog": {
+        "titlePlaceholder": "Prompt title",
+        "contentLabel": "Prompt text",
+        "cancel": "Cancel",
+        "save": "Save"
+      }
+    }
   },
   "threadHistory": {
     "sidebar": {

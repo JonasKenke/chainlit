@@ -14,6 +14,7 @@ import {
   IChainlitConfig,
   IMcp,
   IMessageElement,
+  IPrompt,
   IStep,
   ITasklistElement,
   IUser,
@@ -274,5 +275,10 @@ export const mcpState = atom<IMcp[]>({
 
 export const favoriteMessagesState = atom<IStep[]>({
   key: 'favoriteMessagesState',
+  default: []
+});
+
+export const promptGalleryState = atom<IPrompt[]>({
+  key: 'promptGalleryState',
   default: []
 });

@@ -6,6 +6,7 @@ import Element from 'pages/Element';
 import Env from 'pages/Env';
 import Home from 'pages/Home';
 import Login from 'pages/Login';
+import PromptSharePage from 'pages/PromptShare';
 import Thread from 'pages/Thread';
 
 export const router = createBrowserRouter(
@@ -37,6 +38,10 @@ export const router = createBrowserRouter(
     {
       path: '/share/:id',
       element: <Thread />
+    },
+    {
+      path: '/prompt/:id',
+      element: <PromptSharePage />
     },
     {
       path: '*',

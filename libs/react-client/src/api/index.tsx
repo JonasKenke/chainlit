@@ -2,6 +2,7 @@ import { IElement, IThread, IUser } from 'src/types';
 
 import { IAction } from 'src/types/action';
 import { IFeedback } from 'src/types/feedback';
+import { IPrompt } from 'src/types/prompt';
 
 export * from './hooks/auth';
 export * from './hooks/api';
@@ -384,6 +385,49 @@ export class ChainlitAPI extends APIBase {
       threadId,
       isShared
     });
+    return res.json();
+  }
+
+  // ---- Prompt Gallery ----
+
+  async listPrompts(): Promise<IPrompt[]> {
+    const res = await this.get(`/project/prompts`);
+    return res.json();
+  }
+
+  async createPrompt(title: string, content: string): Promise<IPrompt> {
+    const res = await this.post(`/project/prompts`, { title, content });
+    return res.json();
+  }
+
+  async updatePrompt(
+    id: string,
+    fields: { title?: string; content?: string }
+  ): Promise<IPrompt> {
+    const res = await this.put(`/project/prompts/${id}`, fields);
+    return res.json();
+  }
+
+  async deletePrompt(id: string): Promise<{ success: boolean }> {
+    const res = await this.delete(`/project/prompts/${id}`, {});
+    return res.json();
+  }
+
+  async sharePrompt(
+    id: string,
+    isShared: boolean
+  ): Promise<{ prompt: IPrompt; shareUrl: string }> {
+    const res = await this.post(`/project/prompts/${id}/share`, { isShared });
+    return res.json();
+  }
+
+  async getSharedPrompt(id: string): Promise<IPrompt> {
+    const res = await this.get(`/project/prompt/share/${id}`);
+    return res.json();
+  }
+
+  async addSharedPrompt(id: string): Promise<IPrompt> {
+    const res = await this.post(`/project/prompt/share/${id}/add`, {});
     return res.json();
   }
 }

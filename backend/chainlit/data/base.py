@@ -5,6 +5,7 @@ from chainlit.types import (
     Feedback,
     PaginatedResponse,
     Pagination,
+    PromptDict,
     ThreadDict,
     ThreadFilter,
 )
@@ -122,3 +123,30 @@ class BaseDataLayer(ABC):
         step_dict["metadata"] = metadata
         await self.update_step(step_dict)
         return step_dict
+
+    # ---- Prompt Gallery (opt-in; non-abstract so existing data layers stay valid) ----
+
+    async def create_prompt(self, prompt: PromptDict) -> PromptDict:
+        raise NotImplementedError(
+            "Prompt gallery is not implemented for this data layer"
+        )
+
+    async def list_prompts(self, user_id: str) -> List[PromptDict]:
+        raise NotImplementedError(
+            "Prompt gallery is not implemented for this data layer"
+        )
+
+    async def get_prompt(self, prompt_id: str) -> Optional[PromptDict]:
+        raise NotImplementedError(
+            "Prompt gallery is not implemented for this data layer"
+        )
+
+    async def update_prompt(self, prompt: PromptDict) -> PromptDict:
+        raise NotImplementedError(
+            "Prompt gallery is not implemented for this data layer"
+        )
+
+    async def delete_prompt(self, prompt_id: str, user_id: str) -> bool:
+        raise NotImplementedError(
+            "Prompt gallery is not implemented for this data layer"
+        )

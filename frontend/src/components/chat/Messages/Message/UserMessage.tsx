@@ -14,6 +14,7 @@ import {
 
 import AutoResizeTextarea from '@/components/AutoResizeTextarea';
 import { Pencil } from '@/components/icons/Pencil';
+import { BookmarkButton } from '@/components/chat/Messages/Message/Buttons/BookmarkButton';
 import { Button } from '@/components/ui/button';
 import { Translator } from 'components/i18n';
 
@@ -94,6 +95,11 @@ const UserMessage = memo(function UserMessage({
           >
             <Star className={cn('h-4 w-4', isFavorite ? 'fill-current' : '')} />
           </Button>
+        )}
+        {!isEditing && (
+          <div className="invisible group-hover:visible">
+            <BookmarkButton message={message} />
+          </div>
         )}
         <div
           className={cn(

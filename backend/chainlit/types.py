@@ -359,3 +359,27 @@ class Feedback:
 class UpdateFeedbackRequest(BaseModel):
     feedback: Feedback
     sessionId: str
+
+
+class PromptDict(TypedDict):
+    id: str
+    title: str
+    content: str
+    userId: str
+    isShared: bool
+    createdAt: str
+    updatedAt: str
+
+
+class CreatePromptRequest(BaseModel):
+    title: str
+    content: str
+
+
+class UpdatePromptRequest(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+
+
+class SharePromptRequest(BaseModel):
+    isShared: bool

@@ -47,6 +47,7 @@ import FavoriteButton from './FavoriteButton';
 import Input, { InputMethods } from './Input';
 import McpButton from './Mcp';
 import ModePicker from './ModePicker';
+import PromptGalleryButton from './PromptGalleryButton';
 import SubmitButton from './SubmitButton';
 import UploadButton from './UploadButton';
 import VoiceButton from './VoiceButton';
@@ -332,6 +333,10 @@ export default function MessageComposer({
           />
 
           <FavoriteButton disabled={disabled} onSelect={onFavoriteSelect} />
+          <PromptGalleryButton
+            disabled={disabled}
+            onSelect={onFavoriteSelect}
+          />
         </div>
         <div className="flex items-center gap-1">
           <SubmitButton
