@@ -80,16 +80,15 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
               <Button
                 id="prompt-gallery-open"
                 variant="ghost"
-                size="sm"
+                size="icon"
                 className={cn(
-                  'flex items-center h-9 px-3 rounded-full font-medium text-[13px] gap-1.5',
-                  'hover:bg-muted hover:dark:bg-muted transition-all duration-200',
+                  'rounded-full hover:bg-muted hover:dark:bg-muted transition-all duration-200',
                   open && 'bg-muted/50'
                 )}
                 disabled={disabled}
                 onClick={() => setOpen(true)}
               >
-                <BookMarked className="!size-5" />
+                <BookMarked className="!size-6" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -137,7 +136,7 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
                         onSelect(prompt.content);
                         setOpen(false);
                       }}
-                      className="cursor-pointer flex-col items-start py-3"
+                      className="cursor-pointer flex-col items-start py-4"
                     >
                       <div className="flex items-start justify-between gap-2 w-full overflow-hidden">
                         <div className="flex flex-col gap-1 overflow-hidden">
