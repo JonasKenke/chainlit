@@ -1,0 +1,15 @@
+[project]
+user_env = []
+session_timeout = 3600
+cache = false
+
+[features]
+edit_message = true
+favorites = false
+prompt_gallery = true
+
+[features.audio]
+enabled = false
+
+[UI]
+name = "Chainlit"

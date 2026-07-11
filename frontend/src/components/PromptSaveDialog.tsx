@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useTranslation } from '@/components/i18n/Translator';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,13 @@ export function PromptSaveDialog({
   const [saving, setSaving] = useState(false);
 
   // Reset when dialog opens with new values
+  useEffect(() => {
+    if (open) {
+      setTitle(initialTitle);
+      setContent(initialContent);
+    }
+  }, [open, initialTitle, initialContent]);
+
   const handleOpenChange = (val: boolean) => {
     if (!val) onClose();
   };
