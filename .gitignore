@@ -62,4 +62,3 @@ dist-ssr
 .dmypy.json
 
 .history
-test_e2e.db
