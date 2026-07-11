@@ -10,9 +10,9 @@ from chainlit.data.sql_alchemy import SQLAlchemyDataLayer
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-# Place DB next to this file so it lives in CHAINLIT_APP_ROOT
-_DB_PATH = os.path.join(os.path.dirname(__file__), "test_e2e.db")
-_DB_URI = f"sqlite+aiosqlite:///{_DB_PATH}"
+# Use in-memory SQLite so each test run starts fresh.
+_DB_URI = "sqlite+aiosqlite://"
+_DB_PATH = None
 
 _SETUP_SQL = """
 CREATE TABLE IF NOT EXISTS users (
@@ -80,7 +80,6 @@ CREATE TABLE IF NOT EXISTS prompts (
     "title" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "isShared" INTEGER NOT NULL DEFAULT 0,
-    "sharedId" TEXT,
     "createdAt" TEXT NOT NULL,
     "updatedAt" TEXT NOT NULL
 );

@@ -139,11 +139,12 @@
       "save": "Prompt speichern",
       "saving": "Wird gespeichert...",
       "edit": "Prompt bearbeiten",
-      "use": "Prompt verwenden",
       "share": {
         "title": "Prompt teilen",
-        "copy": "Link kopieren",
-        "copied": "Link kopiert!"
+        "adding": "Wird hinzugefügt…",
+        "goHome": "Zur Startseite",
+        "notFound": "Prompt nicht gefunden oder nicht mehr geteilt.",
+        "addError": "Prompt konnte nicht hinzugefügt werden"
       },
       "unshare": "Teilen aufheben",
       "delete": "Löschen",
@@ -162,7 +163,8 @@
       },
       "new": "Neuer Prompt",
       "search": "Prompts suchen...",
-      "saved": "Prompt gespeichert!"
+      "saved": "Prompt gespeichert!",
+      "unshared": "Teilen aufgehoben"
     }
   },
   "threadHistory": {

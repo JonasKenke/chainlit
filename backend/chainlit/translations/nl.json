@@ -139,11 +139,12 @@
       "save": "Prompt opslaan",
       "saving": "Opslaan...",
       "edit": "Prompt bewerken",
-      "use": "Prompt gebruiken",
       "share": {
         "title": "Prompt delen",
-        "copy": "Link kopiëren",
-        "copied": "Link gekopieerd!"
+        "adding": "Toevoegen…",
+        "goHome": "Naar startpagina",
+        "notFound": "Prompt niet gevonden of niet langer gedeeld.",
+        "addError": "Prompt toevoegen mislukt"
       },
       "unshare": "Delen ongedaan maken",
       "delete": "Verwijderen",
@@ -162,7 +163,8 @@
       },
       "new": "Nieuwe prompt",
       "search": "Prompts zoeken...",
-      "saved": "Prompt opgeslagen!"
+      "saved": "Prompt opgeslagen!",
+      "unshared": "Delen verwijderd"
     }
   },
   "threadHistory": {

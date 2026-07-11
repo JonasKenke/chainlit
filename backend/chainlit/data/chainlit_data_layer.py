@@ -18,6 +18,7 @@ from chainlit.types import (
     PageInfo,
     PaginatedResponse,
     Pagination,
+    PromptDict,
     ThreadDict,
     ThreadFilter,
 )
@@ -719,6 +720,121 @@ class ChainlitDataLayer(BaseDataLayer):
             playerConfig=row.get("playerConfig"),
             props=json.loads(row.get("props") or "{}"),
         )
+
+    # ---- Prompt Gallery ----
+
+    async def create_prompt(self, prompt: PromptDict) -> PromptDict:
+        if self.show_logger:
+            logger.info(f"asyncpg: create_prompt, id={prompt['id']}")
+
+        query = """
+        INSERT INTO "Prompt" ("id", "userId", "title", "content", "isShared", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT ("id") DO UPDATE SET
+            "title" = EXCLUDED."title",
+            "content" = EXCLUDED."content",
+            "isShared" = EXCLUDED."isShared",
+            "updatedAt" = EXCLUDED."updatedAt"
+        """
+        await self.execute_query(
+            query,
+            {
+                "1": prompt["id"],
+                "2": prompt["userId"],
+                "3": prompt["title"],
+                "4": prompt["content"],
+                "5": prompt["isShared"],
+                "6": prompt["createdAt"],
+                "7": prompt["updatedAt"],
+            },
+        )
+        return prompt
+
+    async def list_prompts(self, user_id: str) -> List[PromptDict]:
+        if self.show_logger:
+            logger.info(f"asyncpg: list_prompts, user_id={user_id}")
+
+        try:
+            query = """
+            SELECT * FROM "Prompt"
+            WHERE "userId" = $1
+            ORDER BY "createdAt" DESC
+            """
+            results = await self.execute_query(query, {"1": user_id})
+        except Exception:
+            # Table may not exist yet; create on first access via create_prompt
+            return []
+
+        return [
+            PromptDict(
+                id=str(row["id"]),
+                userId=str(row["userId"]),
+                title=str(row["title"]),
+                content=str(row["content"]),
+                isShared=bool(row["isShared"]),
+                createdAt=str(row["createdAt"]),
+                updatedAt=str(row["updatedAt"]),
+            )
+            for row in results
+        ]
+
+    async def get_prompt(self, prompt_id: str) -> Optional[PromptDict]:
+        if self.show_logger:
+            logger.info(f"asyncpg: get_prompt, id={prompt_id}")
+
+        try:
+            query = """SELECT * FROM "Prompt" WHERE "id" = $1"""
+            results = await self.execute_query(query, {"1": prompt_id})
+        except Exception:
+            return None
+
+        if not results:
+            return None
+
+        row = results[0]
+        return PromptDict(
+            id=str(row["id"]),
+            userId=str(row["userId"]),
+            title=str(row["title"]),
+            content=str(row["content"]),
+            isShared=bool(row["isShared"]),
+            createdAt=str(row["createdAt"]),
+            updatedAt=str(row["updatedAt"]),
+        )
+
+    async def update_prompt(self, prompt: PromptDict) -> PromptDict:
+        if self.show_logger:
+            logger.info(f"asyncpg: update_prompt, id={prompt['id']}")
+
+        query = """
+        UPDATE "Prompt"
+        SET "title" = $1, "content" = $2, "isShared" = $3, "updatedAt" = $4
+        WHERE "id" = $5 AND "userId" = $6
+        """
+        await self.execute_query(
+            query,
+            {
+                "1": prompt["title"],
+                "2": prompt["content"],
+                "3": prompt["isShared"],
+                "4": prompt["updatedAt"],
+                "5": prompt["id"],
+                "6": prompt["userId"],
+            },
+        )
+        return prompt
+
+    async def delete_prompt(self, prompt_id: str, user_id: str) -> bool:
+        if self.show_logger:
+            logger.info(f"asyncpg: delete_prompt, id={prompt_id}")
+
+        try:
+            query = """DELETE FROM "Prompt" WHERE "id" = $1 AND "userId" = $2"""
+            await self.execute_query(query, {"1": prompt_id, "2": user_id})
+            return True
+        except Exception as e:
+            logger.warning(f"asyncpg: delete_prompt error: {e}")
+            return False
 
     async def build_debug_url(self) -> str:
         return ""

@@ -139,11 +139,12 @@
       "save": "Salva prompt",
       "saving": "Salvataggio...",
       "edit": "Modifica prompt",
-      "use": "Usa prompt",
       "share": {
         "title": "Condividi prompt",
-        "copy": "Copia link",
-        "copied": "Link copiato!"
+        "adding": "Aggiunta…",
+        "goHome": "Vai alla home",
+        "notFound": "Prompt non trovato o non più condiviso.",
+        "addError": "Impossibile aggiungere il prompt"
       },
       "unshare": "Annulla condivisione",
       "delete": "Elimina",
@@ -162,7 +163,8 @@
       },
       "new": "Nuovo prompt",
       "search": "Cerca prompt...",
-      "saved": "Prompt salvato!"
+      "saved": "Prompt salvato!",
+      "unshared": "Condivisione rimossa"
     }
   },
   "threadHistory": {

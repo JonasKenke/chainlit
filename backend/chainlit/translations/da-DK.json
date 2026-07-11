@@ -139,11 +139,12 @@
       "save": "Gem prompt",
       "saving": "Gemmer...",
       "edit": "Rediger prompt",
-      "use": "Brug prompt",
       "share": {
         "title": "Del prompt",
-        "copy": "Kopier link",
-        "copied": "Link kopieret!"
+        "adding": "Tilføjer…",
+        "goHome": "Gå til forsiden",
+        "notFound": "Prompt blev ikke fundet eller er ikke længere delt.",
+        "addError": "Kunne ikke tilføje prompt"
       },
       "unshare": "Fjern deling",
       "delete": "Slet",
@@ -162,7 +163,8 @@
       },
       "new": "Ny prompt",
       "search": "Søg i prompts...",
-      "saved": "Prompt gemt!"
+      "saved": "Prompt gemt!",
+      "unshared": "Deling fjernet"
     }
   },
   "threadHistory": {

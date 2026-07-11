@@ -184,7 +184,7 @@ describe('PromptGalleryButton', () => {
     });
     fireEvent.click(editBtn);
     // Gallery closed, edit dialog open
-    await waitFor(() => screen.getByText('chat.promptGallery.save'));
+    await waitFor(() => screen.getByText('chat.promptGallery.edit'));
     // Cancel the edit dialog
     fireEvent.click(
       screen.getByRole('button', { name: 'chat.promptGallery.dialog.cancel' })
@@ -203,7 +203,7 @@ describe('PromptGalleryButton', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'chat.promptGallery.edit' })
     );
-    await waitFor(() => screen.getByText('chat.promptGallery.save'));
+    await waitFor(() => screen.getByText('chat.promptGallery.edit'));
     // Save
     fireEvent.click(
       screen.getByRole('button', { name: 'chat.promptGallery.dialog.save' })

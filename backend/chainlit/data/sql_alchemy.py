@@ -955,8 +955,12 @@ class SQLAlchemyDataLayer(BaseDataLayer):
 
     # ---- Prompt Gallery ----
 
+    _prompts_table_checked: bool = False
+
     async def _ensure_prompts_table(self) -> None:
-        """Create the prompts table if it doesn't exist (lazy migration)."""
+        """Create the prompts table if it doesn't exist. Only runs once per instance."""
+        if self._prompts_table_checked:
+            return
         await self.execute_sql(
             """
             CREATE TABLE IF NOT EXISTS prompts (
@@ -971,6 +975,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
             """,
             {},
         )
+        self._prompts_table_checked = True
 
     async def create_prompt(self, prompt: PromptDict) -> PromptDict:
         if self.show_logger:

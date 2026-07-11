@@ -1,9 +1,9 @@
 """Unit tests for SQLAlchemy prompt gallery persistence."""
+
 import uuid
 from pathlib import Path
 
 import pytest
-from sqlalchemy.ext.asyncio import create_async_engine
 
 from chainlit.data.sql_alchemy import SQLAlchemyDataLayer
 from chainlit.data.storage_clients.base import BaseStorageClient
@@ -13,7 +13,6 @@ from chainlit.data.storage_clients.base import BaseStorageClient
 async def data_layer(mock_storage_client: BaseStorageClient, tmp_path: Path):
     db_file = tmp_path / "prompts_test.sqlite"
     conninfo = f"sqlite+aiosqlite:///{db_file}"
-    engine = create_async_engine(conninfo)
     dl = SQLAlchemyDataLayer(conninfo=conninfo, storage_provider=mock_storage_client)
     yield dl
     await dl.close()
@@ -60,7 +59,11 @@ async def test_get_prompt_missing(data_layer):
 
 async def test_update_prompt(data_layer, prompt_data, user_id):
     await data_layer.create_prompt(prompt_data)
-    updated_data = {**prompt_data, "title": "Better title", "updatedAt": "2024-06-01T00:00:00Z"}
+    updated_data = {
+        **prompt_data,
+        "title": "Better title",
+        "updatedAt": "2024-06-01T00:00:00Z",
+    }
     updated = await data_layer.update_prompt(updated_data)
     assert updated["title"] == "Better title"
 

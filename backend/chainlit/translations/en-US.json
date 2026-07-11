@@ -139,13 +139,15 @@
       "save": "Save prompt",
       "saving": "Saving...",
       "edit": "Edit prompt",
-      "use": "Use prompt",
       "share": {
         "title": "Share Prompt",
-        "copy": "Copy link",
-        "copied": "Link copied!"
+        "adding": "Adding…",
+        "goHome": "Go home",
+        "notFound": "Prompt not found or no longer shared.",
+        "addError": "Failed to add prompt"
       },
       "unshare": "Unshare",
+      "unshared": "Sharing removed",
       "delete": "Delete",
       "copied": "Link copied!",
       "addToGallery": "Add to my gallery",

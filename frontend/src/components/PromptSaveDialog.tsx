@@ -17,6 +17,7 @@ interface Props {
   open: boolean;
   initialTitle?: string;
   initialContent?: string;
+  editing?: boolean;
   onSave: (title: string, content: string) => Promise<void>;
   onClose: () => void;
 }
@@ -25,6 +26,7 @@ export function PromptSaveDialog({
   open,
   initialTitle = '',
   initialContent = '',
+  editing = false,
   onSave,
   onClose
 }: Props) {
@@ -60,7 +62,11 @@ export function PromptSaveDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t('chat.promptGallery.save')}</DialogTitle>
+          <DialogTitle>
+            {editing
+              ? t('chat.promptGallery.edit')
+              : t('chat.promptGallery.save')}
+          </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">

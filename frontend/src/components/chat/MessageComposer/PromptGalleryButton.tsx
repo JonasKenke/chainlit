@@ -1,5 +1,13 @@
+import getRouterBasename from '@/lib/router';
 import { cn } from '@/lib/utils';
-import { BookMarked, Copy, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+  BookMarked,
+  Globe,
+  GlobeLock,
+  Pencil,
+  Plus,
+  Trash2
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 import { toast } from 'sonner';
@@ -61,10 +69,17 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
 
   const handleShare = useCallback(
     async (prompt: IPrompt) => {
-      const shareUrl = await sharePrompt(prompt.id, true);
-      const fullUrl = `${window.location.origin}${shareUrl}`;
-      await navigator.clipboard.writeText(fullUrl);
-      toast.success(t('chat.promptGallery.copied'));
+      const isCurrentlyShared = prompt.isShared;
+      const newSharedState = !isCurrentlyShared;
+      const shareUrl = await sharePrompt(prompt.id, newSharedState);
+      if (newSharedState) {
+        const basename = getRouterBasename();
+        const fullUrl = `${window.location.origin}${basename}${shareUrl}`;
+        await navigator.clipboard.writeText(fullUrl);
+        toast.success(t('chat.promptGallery.copied'));
+      } else {
+        toast.success(t('chat.promptGallery.unshared'));
+      }
     },
     [sharePrompt, t]
   );
@@ -167,17 +182,32 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                            aria-label={t('chat.promptGallery.share.title')}
+                            className={cn(
+                              'h-7 w-7',
+                              prompt.isShared
+                                ? 'text-blue-500 hover:text-blue-600'
+                                : 'text-muted-foreground hover:text-foreground'
+                            )}
+                            aria-label={
+                              prompt.isShared
+                                ? t('chat.promptGallery.unshare')
+                                : t('chat.promptGallery.share.title')
+                            }
                             onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleShare(prompt).catch(() =>
-                                toast.error('Failed to share')
+                                toast.error(
+                                  t('chat.promptGallery.share.addError')
+                                )
                               );
                             }}
                           >
-                            <Copy className="h-3.5 w-3.5" />
+                            {prompt.isShared ? (
+                              <GlobeLock className="h-3.5 w-3.5" />
+                            ) : (
+                              <Globe className="h-3.5 w-3.5" />
+                            )}
                           </Button>
                           <Button
                             type="button"
@@ -209,6 +239,7 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
       {editTarget && (
         <PromptSaveDialog
           open
+          editing
           initialTitle={editTarget.title}
           initialContent={editTarget.content}
           onSave={async (title, content) => {

@@ -1,3 +1,4 @@
+import getRouterBasename from '@/lib/router';
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -39,15 +40,17 @@ export default function PromptSharePage() {
         setLoading(false);
       })
       .catch(() => {
-        setError('Prompt not found or no longer shared.');
+        setError(t('chat.promptGallery.share.notFound'));
         setLoading(false);
       });
-  }, [id, apiClient]);
+  }, [id, apiClient, t]);
+
+  const loginPath = `${getRouterBasename()}/login`;
 
   const handleAdd = async () => {
     if (!id) return;
     if (authConfig?.requireLogin && !isAuthenticated) {
-      navigate('/login');
+      navigate(loginPath);
       return;
     }
     setAdding(true);
@@ -57,7 +60,7 @@ export default function PromptSharePage() {
       toast.success(t('chat.promptGallery.added'));
       navigate('/');
     } catch {
-      toast.error('Failed to add prompt');
+      toast.error(t('chat.promptGallery.share.addError'));
     } finally {
       setAdding(false);
     }
@@ -67,12 +70,14 @@ export default function PromptSharePage() {
     <Page>
       <div className="flex flex-col items-center justify-center flex-1 p-6 gap-6 max-w-xl mx-auto w-full">
         {loading ? (
-          <p className="text-muted-foreground text-sm">Loading…</p>
+          <p className="text-muted-foreground text-sm">
+            {t('common.status.loading')}
+          </p>
         ) : error ? (
           <div className="flex flex-col items-center gap-3 text-center">
             <p className="text-destructive text-sm">{error}</p>
             <Button variant="outline" onClick={() => navigate('/')}>
-              Go home
+              {t('chat.promptGallery.share.goHome')}
             </Button>
           </div>
         ) : prompt ? (
@@ -92,7 +97,7 @@ export default function PromptSharePage() {
                 {added
                   ? t('chat.promptGallery.added')
                   : adding
-                    ? 'Adding…'
+                    ? t('chat.promptGallery.share.adding')
                     : t('chat.promptGallery.addToGallery')}
               </Button>
             ) : null}
