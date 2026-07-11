@@ -13,15 +13,16 @@ The tables are created on first run.
 
 import asyncio
 
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
+
 import chainlit as cl
 from chainlit.data.sql_alchemy import SQLAlchemyDataLayer
-from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy import text
 
 _DB_URI = "sqlite+aiosqlite:///demo.db"
 
 # Minimal DDL — only the tables the demo actually uses.
-# ponytail: inline DDL beats a full Alembic migration for a demo.
+# Minimal DDL for the demo — a full Alembic migration is not needed here.
 _SETUP_SQL = """
 CREATE TABLE IF NOT EXISTS users (
     "id" TEXT PRIMARY KEY,

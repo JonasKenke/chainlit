@@ -218,7 +218,7 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
           }}
           onClose={() => {
             setEditTarget(null);
-            setOpen(true); // ponytail: reopen gallery when edit is cancelled/closed
+            setOpen(true); // reopen gallery when edit is cancelled/closed
           }}
         />
       )}

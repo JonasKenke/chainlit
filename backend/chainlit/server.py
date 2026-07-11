@@ -10,7 +10,7 @@ import urllib.parse
 import webbrowser
 from contextlib import AsyncExitStack, asynccontextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, List, Optional, Union, cast
 
 import socketio
 from fastapi import (
@@ -34,7 +34,13 @@ from starlette.types import Receive, Scope, Send
 from typing_extensions import Annotated
 from watchfiles import awatch
 
-from chainlit.auth import create_jwt, decode_jwt, get_configuration, get_current_user, require_login
+from chainlit.auth import (
+    create_jwt,
+    decode_jwt,
+    get_configuration,
+    get_current_user,
+    require_login,
+)
 from chainlit.auth.cookie import (
     clear_auth_cookie,
     clear_oauth_state_cookie,
@@ -1069,6 +1075,17 @@ def _prompt_gallery_enabled() -> None:
         )
 
 
+async def _dl_prompt(coro: Any) -> Any:
+    """Await a prompt data-layer call; map NotImplementedError to HTTP 501."""
+    try:
+        return await coro
+    except NotImplementedError as exc:
+        raise HTTPException(
+            status_code=501,
+            detail=str(exc) or "Prompt gallery is not supported by this data layer",
+        ) from exc
+
+
 @router.get("/project/prompts")
 async def list_prompts(
     request: Request,
@@ -1079,8 +1096,8 @@ async def list_prompts(
     data_layer = get_data_layer()
     if not data_layer:
         raise HTTPException(status_code=400, detail="Data persistence is not enabled")
-    prompts = await data_layer.list_prompts(
-        await _get_user_id(current_user, data_layer)
+    prompts = await _dl_prompt(
+        data_layer.list_prompts(await _get_user_id(current_user, data_layer))
     )
     return JSONResponse(content=prompts)
 
@@ -1108,7 +1125,7 @@ async def create_prompt(
         "createdAt": now,
         "updatedAt": now,
     }
-    created = await data_layer.create_prompt(prompt)  # type: ignore[arg-type]
+    created = await _dl_prompt(data_layer.create_prompt(prompt))  # type: ignore[arg-type]
     return JSONResponse(content=created)
 
 
@@ -1125,7 +1142,7 @@ async def update_prompt(
     if not data_layer:
         raise HTTPException(status_code=400, detail="Data persistence is not enabled")
     user_id = await _get_user_id(current_user, data_layer)
-    existing = await data_layer.get_prompt(prompt_id)
+    existing = await _dl_prompt(data_layer.get_prompt(prompt_id))
     if not existing or existing["userId"] != user_id:
         raise HTTPException(status_code=404, detail="Prompt not found")
     updated = dict(existing)
@@ -1134,7 +1151,7 @@ async def update_prompt(
     if payload.content is not None:
         updated["content"] = payload.content
     updated["updatedAt"] = utc_now()
-    result = await data_layer.update_prompt(updated)  # type: ignore[arg-type]
+    result = await _dl_prompt(data_layer.update_prompt(updated))  # type: ignore[arg-type]
     return JSONResponse(content=result)
 
 
@@ -1149,8 +1166,10 @@ async def delete_prompt(
     data_layer = get_data_layer()
     if not data_layer:
         raise HTTPException(status_code=400, detail="Data persistence is not enabled")
-    deleted = await data_layer.delete_prompt(
-        prompt_id, await _get_user_id(current_user, data_layer)
+    deleted = await _dl_prompt(
+        data_layer.delete_prompt(
+            prompt_id, await _get_user_id(current_user, data_layer)
+        )
     )
     if not deleted:
         raise HTTPException(status_code=404, detail="Prompt not found")
@@ -1170,13 +1189,13 @@ async def share_prompt(
     if not data_layer:
         raise HTTPException(status_code=400, detail="Data persistence is not enabled")
     user_id = await _get_user_id(current_user, data_layer)
-    existing = await data_layer.get_prompt(prompt_id)
+    existing = await _dl_prompt(data_layer.get_prompt(prompt_id))
     if not existing or existing["userId"] != user_id:
         raise HTTPException(status_code=404, detail="Prompt not found")
     updated = dict(existing)
     updated["isShared"] = payload.isShared
     updated["updatedAt"] = utc_now()
-    result = await data_layer.update_prompt(updated)  # type: ignore[arg-type]
+    result = await _dl_prompt(data_layer.update_prompt(updated))  # type: ignore[arg-type]
     return JSONResponse(content={"prompt": result, "shareUrl": f"/prompt/{prompt_id}"})
 
 
@@ -1191,7 +1210,7 @@ async def get_shared_prompt(
     data_layer = get_data_layer()
     if not data_layer:
         raise HTTPException(status_code=400, detail="Data persistence is not enabled")
-    prompt = await data_layer.get_prompt(prompt_id)
+    prompt = await _dl_prompt(data_layer.get_prompt(prompt_id))
     if not prompt or not prompt["isShared"]:
         raise HTTPException(status_code=404, detail="Prompt not found")
     return JSONResponse(content=prompt)
@@ -1208,7 +1227,7 @@ async def add_shared_prompt(
     data_layer = get_data_layer()
     if not data_layer:
         raise HTTPException(status_code=400, detail="Data persistence is not enabled")
-    source = await data_layer.get_prompt(prompt_id)
+    source = await _dl_prompt(data_layer.get_prompt(prompt_id))
     if not source or not source["isShared"]:
         raise HTTPException(status_code=404, detail="Prompt not found")
     import uuid as _uuid
@@ -1223,7 +1242,7 @@ async def add_shared_prompt(
         "createdAt": now,
         "updatedAt": now,
     }
-    created = await data_layer.create_prompt(copy)  # type: ignore[arg-type]
+    created = await _dl_prompt(data_layer.create_prompt(copy))  # type: ignore[arg-type]
     return JSONResponse(content=created)
 
 

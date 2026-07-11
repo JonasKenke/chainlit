@@ -283,8 +283,8 @@
     },
     "DatePickerInput": {
       "placeholder": {
-        "single": "Pick a date",
-        "range": "Pick a date range"
+        "single": "Seleziona una data",
+        "range": "Seleziona un intervallo di date"
       }
     }
   }

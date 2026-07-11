@@ -1,4 +1,5 @@
 """Tests for the prompt gallery endpoints."""
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -66,16 +67,16 @@ def _enable_gallery(monkeypatch):
 # ---- feature disabled (default) ----
 
 
-def test_list_prompts_feature_disabled(test_client):
+def test_list_prompts_feature_disabled(test_client, monkeypatch):
+    monkeypatch.setattr(config.features, "prompt_gallery", False)
     response = test_client.get("/project/prompts")
     assert response.status_code == 400
     assert "not enabled" in response.json()["detail"]
 
 
-def test_create_prompt_feature_disabled(test_client):
-    response = test_client.post(
-        "/project/prompts", json={"title": "x", "content": "y"}
-    )
+def test_create_prompt_feature_disabled(test_client, monkeypatch):
+    monkeypatch.setattr(config.features, "prompt_gallery", False)
+    response = test_client.post("/project/prompts", json={"title": "x", "content": "y"})
     assert response.status_code == 400
 
 
@@ -152,9 +153,7 @@ def test_update_prompt_ok(test_client, monkeypatch, persisted_user, mock_data_la
     assert response.json()["title"] == "Updated"
 
 
-def test_update_prompt_not_owner(
-    test_client, monkeypatch, other_user, mock_data_layer
-):
+def test_update_prompt_not_owner(test_client, monkeypatch, other_user, mock_data_layer):
     _enable_gallery(monkeypatch)
     app.dependency_overrides[get_current_user] = lambda: other_user
     try:
@@ -219,9 +218,7 @@ def test_share_prompt_ok(
     assert "/prompt/prompt-1" in body["shareUrl"]
 
 
-def test_get_shared_prompt_ok(
-    test_client, monkeypatch, mock_data_layer, sample_prompt
-):
+def test_get_shared_prompt_ok(test_client, monkeypatch, mock_data_layer, sample_prompt):
     _enable_gallery(monkeypatch)
     mock_data_layer.get_prompt.return_value = {**sample_prompt, "isShared": True}
     with patch("chainlit.server.get_data_layer", return_value=mock_data_layer):
