@@ -19,7 +19,7 @@ export default function PromptSharePage() {
   const { id } = useParams<{ id: string }>();
   const apiClient = useContext(ChainlitContext);
   const { config } = useConfig();
-  const { user } = useAuth();
+  const { data: authConfig, isAuthenticated } = useAuth();
   const { addSharedPrompt } = usePromptGallery();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -45,7 +45,8 @@ export default function PromptSharePage() {
   }, [id, apiClient]);
 
   const handleAdd = async () => {
-    if (!id || !user) {
+    if (!id) return;
+    if (authConfig?.requireLogin && !isAuthenticated) {
       navigate('/login');
       return;
     }

@@ -131,7 +131,7 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
                   {prompts.map((prompt) => (
                     <CommandItem
                       key={prompt.id}
-                      value={`${prompt.title} ${prompt.content}`}
+                      value={`${prompt.id} ${prompt.title} ${prompt.content}`}
                       onSelect={() => {
                         onSelect(prompt.content);
                         setOpen(false);

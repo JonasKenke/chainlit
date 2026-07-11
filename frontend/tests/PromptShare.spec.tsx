@@ -6,7 +6,7 @@ import {
   waitFor
 } from '@testing-library/react';
 import { RecoilRoot } from 'recoil';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import PromptSharePage from '@/pages/PromptShare';
 
@@ -29,6 +29,7 @@ const getSharedPromptMock = vi.hoisted(() =>
     updatedAt: ''
   })
 );
+const useAuthMock = vi.hoisted(() => vi.fn());
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => navigateMock,
@@ -43,7 +44,7 @@ vi.mock('@chainlit/react-client', async () => {
   const { createContext } = await import('react');
   return {
     ChainlitContext: createContext<any>(undefined),
-    useAuth: () => ({ user: { id: 'u1' } }),
+    useAuth: useAuthMock,
     useConfig: () => ({ config: { promptGallery: true } }),
     usePromptGallery: () => ({ addSharedPrompt: addSharedPromptMock })
   };
@@ -65,6 +66,16 @@ const renderPage = () =>
   );
 
 describe('PromptSharePage', () => {
+  beforeEach(() => {
+    navigateMock.mockReset();
+    addSharedPromptMock.mockReset().mockResolvedValue(undefined);
+    useAuthMock.mockReturnValue({
+      user: { id: 'u1' },
+      data: { requireLogin: false },
+      isAuthenticated: true
+    });
+  });
+
   it('shows the shared prompt title and content', async () => {
     renderPage();
     await waitFor(() => screen.getByText('Cool Prompt'));
@@ -72,6 +83,26 @@ describe('PromptSharePage', () => {
   });
 
   it('navigates to / after adding the prompt', async () => {
+    renderPage();
+    await waitFor(() => screen.getByText('Cool Prompt'));
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'chat.promptGallery.addToGallery' })
+      );
+    });
+    await waitFor(() =>
+      expect(addSharedPromptMock).toHaveBeenCalledWith('shared-abc')
+    );
+    expect(navigateMock).toHaveBeenCalledWith('/');
+  });
+
+  it('allows saving when login is not required', async () => {
+    useAuthMock.mockReturnValue({
+      user: null,
+      data: { requireLogin: false },
+      isAuthenticated: true
+    });
+
     renderPage();
     await waitFor(() => screen.getByText('Cool Prompt'));
     await act(async () => {
