@@ -94,8 +94,7 @@
       "actions": {
         "cancelUpload": "アップロードをキャンセル",
         "removeAttachment": "添付ファイルを削除"
-      },
-      "browse": "ファイルを参照"
+      }
     },
     "messages": {
       "status": {

@@ -47,16 +47,11 @@ export default function PromptSharePage() {
 
   const basename = getRouterBasename().replace(/\/$/, '');
   const loginPath = `${basename}/login`;
-  const sharedPromptPath = `${
-    window.location.pathname.startsWith(basename)
-      ? window.location.pathname.slice(basename.length) || '/'
-      : window.location.pathname
-  }${window.location.search}${window.location.hash}`;
 
   const handleAdd = async () => {
     if (!id) return;
     if (authConfig?.requireLogin && !isAuthenticated) {
-      navigate(`${loginPath}?redirect=${encodeURIComponent(sharedPromptPath)}`);
+      navigate(loginPath);
       return;
     }
     setAdding(true);

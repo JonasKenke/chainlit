@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
   LS_DISPLAY_MODE_KEY,
@@ -6,23 +6,8 @@ import {
 } from '../../libs/copilot/src/resolveDisplayMode';
 
 describe('resolveDisplayMode – config vs localStorage precedence', () => {
-  let store: Record<string, string>;
-
   beforeEach(() => {
-    store = {};
-    vi.stubGlobal('localStorage', {
-      getItem: (k: string) => store[k] ?? null,
-      setItem: (k: string, v: string) => {
-        store[k] = v;
-      },
-      removeItem: (k: string) => {
-        delete store[k];
-      }
-    });
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
+    localStorage.removeItem(LS_DISPLAY_MODE_KEY);
   });
 
   it('explicit config wins over localStorage', () => {
