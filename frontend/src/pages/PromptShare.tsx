@@ -45,12 +45,18 @@ export default function PromptSharePage() {
       });
   }, [id, apiClient, t]);
 
-  const loginPath = `${getRouterBasename()}/login`;
+  const basename = getRouterBasename().replace(/\/$/, '');
+  const loginPath = `${basename}/login`;
+  const sharedPromptPath = `${
+    window.location.pathname.startsWith(basename)
+      ? window.location.pathname.slice(basename.length) || '/'
+      : window.location.pathname
+  }${window.location.search}${window.location.hash}`;
 
   const handleAdd = async () => {
     if (!id) return;
     if (authConfig?.requireLogin && !isAuthenticated) {
-      navigate(loginPath);
+      navigate(`${loginPath}?redirect=${encodeURIComponent(sharedPromptPath)}`);
       return;
     }
     setAdding(true);
@@ -88,7 +94,7 @@ export default function PromptSharePage() {
                 {prompt.content}
               </pre>
             </div>
-            {config?.promptGallery ? (
+            {config?.promptGallery !== false ? (
               <Button
                 onClick={handleAdd}
                 disabled={adding || added}

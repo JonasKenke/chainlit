@@ -90,11 +90,27 @@ async def get_current_user(token: str = Depends(reuseable_oauth)):
     return await authenticate_user(token)
 
 
+async def get_optional_current_user(token: str = Depends(reuseable_oauth)):
+    """Return a user for a valid token without requiring authentication.
+
+    This is used by public resources, such as shared prompts.  A missing or
+    invalid token must not prevent anonymous users from viewing those resources.
+    """
+    if not token:
+        return None
+
+    try:
+        return await authenticate_user(token)
+    except HTTPException:
+        return None
+
+
 __all__ = [
     "clear_auth_cookie",
     "create_jwt",
     "get_configuration",
     "get_current_user",
+    "get_optional_current_user",
     "get_token_from_cookies",
     "set_auth_cookie",
 ]

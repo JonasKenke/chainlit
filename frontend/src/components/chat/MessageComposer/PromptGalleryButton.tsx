@@ -48,6 +48,29 @@ interface Props {
   onSelect: (content: string) => void;
 }
 
+async function copyToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  try {
+    if (!document.execCommand('copy')) {
+      throw new Error('Clipboard is unavailable');
+    }
+  } finally {
+    textarea.remove();
+  }
+}
+
 export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
   const { config } = useConfig();
   const { t } = useTranslation();
@@ -60,10 +83,18 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
 
   const hasFetchedRef = useRef(false);
+  const fetchInFlightRef = useRef(false);
   useEffect(() => {
-    if (open && !hasFetchedRef.current) {
-      hasFetchedRef.current = true;
-      Promise.resolve(fetchPrompts()).catch(() => null);
+    if (open && !hasFetchedRef.current && !fetchInFlightRef.current) {
+      fetchInFlightRef.current = true;
+      Promise.resolve(fetchPrompts())
+        .then(() => {
+          hasFetchedRef.current = true;
+        })
+        .catch(() => null)
+        .finally(() => {
+          fetchInFlightRef.current = false;
+        });
     }
   }, [open, fetchPrompts]);
 
@@ -73,9 +104,9 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
       const newSharedState = !isCurrentlyShared;
       const shareUrl = await sharePrompt(prompt.id, newSharedState);
       if (newSharedState) {
-        const basename = getRouterBasename();
+        const basename = getRouterBasename().replace(/\/$/, '');
         const fullUrl = `${window.location.origin}${basename}${shareUrl}`;
-        await navigator.clipboard.writeText(fullUrl);
+        await copyToClipboard(fullUrl);
         toast.success(t('chat.promptGallery.copied'));
       } else {
         toast.success(t('chat.promptGallery.unshared'));
@@ -112,7 +143,10 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
           </Tooltip>
         </TooltipProvider>
 
-        <DialogContent className="sm:max-w-2xl flex flex-col max-h-[80vh] gap-4">
+        <DialogContent
+          className="sm:max-w-2xl flex flex-col max-h-[80vh] gap-4"
+          aria-describedby={undefined}
+        >
           <DialogHeader className="flex flex-row items-center justify-between pr-8">
             <DialogTitle>{t('chat.promptGallery.title')}</DialogTitle>
             <Button
@@ -197,9 +231,7 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
                             onClick={(e) => {
                               e.stopPropagation();
                               handleShare(prompt).catch(() =>
-                                toast.error(
-                                  t('chat.promptGallery.share.addError')
-                                )
+                                toast.error(t('common.status.error.default'))
                               );
                             }}
                           >
@@ -219,7 +251,7 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
                             onClick={(e) => {
                               e.stopPropagation();
                               removePrompt(prompt.id).catch(() =>
-                                toast.error('Failed to delete')
+                                toast.error(t('common.status.error.default'))
                               );
                             }}
                           >
@@ -251,6 +283,7 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
             setEditTarget(null);
             setOpen(true); // reopen gallery when edit is cancelled/closed
           }}
+          onError={() => toast.error(t('common.status.error.default'))}
         />
       )}
 
@@ -262,6 +295,7 @@ export function PromptGalleryButton({ disabled = false, onSelect }: Props) {
           toast.success(t('chat.promptGallery.saved'));
         }}
         onClose={() => setCreateOpen(false)}
+        onError={() => toast.error(t('common.status.error.default'))}
       />
     </>
   );

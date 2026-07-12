@@ -229,6 +229,19 @@ def test_get_shared_prompt_ok(test_client, monkeypatch, mock_data_layer, sample_
     assert response.json()["isShared"] is True
 
 
+def test_get_shared_prompt_does_not_require_auth(
+    test_client, monkeypatch, mock_data_layer, sample_prompt
+):
+    """Shared prompt links remain readable in apps that otherwise require login."""
+    _enable_gallery(monkeypatch)
+    monkeypatch.setattr("chainlit.auth.require_login", lambda: True)
+    mock_data_layer.get_prompt.return_value = {**sample_prompt, "isShared": True}
+    with patch("chainlit.server.get_data_layer", return_value=mock_data_layer):
+        response = test_client.get("/project/prompt/share/prompt-1")
+
+    assert response.status_code == 200
+
+
 def test_get_shared_prompt_not_shared(
     test_client, monkeypatch, mock_data_layer, sample_prompt
 ):
@@ -238,6 +251,21 @@ def test_get_shared_prompt_not_shared(
         response = test_client.get("/project/prompt/share/prompt-1")
 
     assert response.status_code == 404
+
+
+def test_add_shared_prompt_no_auth(
+    test_client, monkeypatch, mock_data_layer, sample_prompt
+):
+    _enable_gallery(monkeypatch)
+    monkeypatch.setattr("chainlit.server.require_login", lambda: False)
+    mock_data_layer.get_prompt.return_value = {**sample_prompt, "isShared": True}
+    mock_data_layer.create_prompt.return_value = sample_prompt
+    with patch("chainlit.server.get_data_layer", return_value=mock_data_layer):
+        response = test_client.post("/project/prompt/share/prompt-1/add")
+
+    assert response.status_code == 200
+    created = mock_data_layer.create_prompt.call_args.args[0]
+    assert created["userId"] == "anonymous"
 
 
 def test_add_shared_prompt_ok(

@@ -13,6 +13,8 @@ export const LoginError = new Error(
   'Error logging in. Please try again later.'
 );
 
+export const AUTH_REDIRECT_STORAGE_KEY = 'chainlit-auth-redirect';
+
 export default function Login() {
   const query = useQuery();
   const { data: config, user, setUserFromAPI } = useAuth();
@@ -21,6 +23,11 @@ export default function Login() {
   const navigate = useNavigate();
   const { variant } = useTheme();
   const isDarkMode = variant === 'dark';
+  const requestedRedirect = query.get('redirect');
+  const redirectURL =
+    requestedRedirect?.startsWith('/') && !requestedRedirect.startsWith('//')
+      ? requestedRedirect
+      : '/';
 
   const handleCookieAuth = (json: any): void => {
     if (json?.success != true) throw LoginError;
@@ -48,18 +55,20 @@ export default function Login() {
 
   const handleHeaderAuth = async () => {
     const jsonPromise = apiClient.headerAuth();
-
-    // Why does apiClient redirect to '/' but handlePasswordLogin to callbackUrl?
-    await handleAuth(jsonPromise, '/');
+    await handleAuth(jsonPromise, redirectURL);
   };
 
-  const handlePasswordLogin = async (email: string, password: string) => {
+  const handlePasswordLogin = async (
+    email: string,
+    password: string,
+    callbackURL = redirectURL
+  ) => {
     const formData = new FormData();
     formData.append('username', email);
     formData.append('password', password);
 
     const jsonPromise = apiClient.passwordAuth(formData);
-    await handleAuth(jsonPromise);
+    await handleAuth(jsonPromise, callbackURL);
   };
 
   useEffect(() => {
@@ -77,7 +86,7 @@ export default function Login() {
       handleHeaderAuth();
     }
     if (user) {
-      navigate('/');
+      navigate(redirectURL);
     }
   }, [config, user]);
 
@@ -91,12 +100,18 @@ export default function Login() {
           <div className="w-full max-w-xs">
             <LoginForm
               error={error}
-              callbackUrl="/"
+              callbackUrl={redirectURL}
               providers={config?.oauthProviders || []}
               onPasswordSignIn={
                 config?.passwordAuth ? handlePasswordLogin : undefined
               }
-              onOAuthSignIn={async (provider: string) => {
+              onOAuthSignIn={async (provider: string, callbackURL: string) => {
+                if (callbackURL !== '/') {
+                  sessionStorage.setItem(
+                    AUTH_REDIRECT_STORAGE_KEY,
+                    callbackURL
+                  );
+                }
                 window.location.href = apiClient.getOAuthEndpoint(provider);
               }}
             />

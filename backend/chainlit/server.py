@@ -39,6 +39,7 @@ from chainlit.auth import (
     decode_jwt,
     get_configuration,
     get_current_user,
+    get_optional_current_user,
     require_login,
 )
 from chainlit.auth.cookie import (
@@ -760,6 +761,28 @@ async def oauth_azure_hf_callback(
 
 GenericUser = Union[User, PersistedUser, None]
 UserParam = Annotated[GenericUser, Depends(get_current_user)]
+OptionalUserParam = Annotated[GenericUser, Depends(get_optional_current_user)]
+
+_PROMPT_GALLERY_METHODS = (
+    "create_prompt",
+    "list_prompts",
+    "get_prompt",
+    "update_prompt",
+    "delete_prompt",
+)
+
+
+def _supports_prompt_gallery(data_layer: Optional[BaseDataLayer]) -> bool:
+    """Return whether a data layer implements all prompt gallery operations."""
+    if data_layer is None:
+        return False
+
+    return all(
+        callable(getattr(data_layer, method, None))
+        and getattr(type(data_layer), method, None)
+        is not getattr(BaseDataLayer, method)
+        for method in _PROMPT_GALLERY_METHODS
+    )
 
 
 @router.get("/user")
@@ -882,7 +905,10 @@ async def project_settings(
                 getattr(cfg.features, "allow_thread_sharing", False)
                 and getattr(config.code, "on_shared_thread_view", None)
             ),
-            "promptGallery": bool(getattr(cfg.features, "prompt_gallery", False)),
+            "promptGallery": bool(
+                getattr(cfg.features, "prompt_gallery", False)
+                and _supports_prompt_gallery(data_layer)
+            ),
             "markdown": markdown,
             "chatProfiles": profiles,
             "starters": starters,
@@ -1203,9 +1229,9 @@ async def share_prompt(
 async def get_shared_prompt(
     request: Request,
     prompt_id: str,
-    current_user: UserParam,
+    current_user: OptionalUserParam,
 ):
-    """Fetch a shared prompt (no auth required). Returns 404 if not shared."""
+    """Fetch a shared prompt anonymously. Returns 404 if not shared."""
     _prompt_gallery_enabled()
     data_layer = get_data_layer()
     if not data_layer:
@@ -1220,9 +1246,9 @@ async def get_shared_prompt(
 async def add_shared_prompt(
     request: Request,
     prompt_id: str,
-    current_user: UserParam,
+    current_user: OptionalUserParam,
 ):
-    """Copy a shared prompt into the authenticated user's gallery."""
+    """Copy a shared prompt into the current user's gallery."""
     _prompt_gallery_enabled()
     data_layer = get_data_layer()
     if not data_layer:

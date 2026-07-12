@@ -20,6 +20,7 @@ interface Props {
   editing?: boolean;
   onSave: (title: string, content: string) => Promise<void>;
   onClose: () => void;
+  onError?: (error: unknown) => void;
 }
 
 export function PromptSaveDialog({
@@ -28,7 +29,8 @@ export function PromptSaveDialog({
   initialContent = '',
   editing = false,
   onSave,
-  onClose
+  onClose,
+  onError
 }: Props) {
   const { t } = useTranslation();
   const [title, setTitle] = useState(initialTitle);
@@ -53,6 +55,8 @@ export function PromptSaveDialog({
     try {
       await onSave(title.trim(), content.trim());
       onClose();
+    } catch (error) {
+      onError?.(error);
     } finally {
       setSaving(false);
     }
@@ -60,7 +64,7 @@ export function PromptSaveDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>
             {editing

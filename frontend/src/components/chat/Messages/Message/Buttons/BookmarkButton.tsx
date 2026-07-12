@@ -55,6 +55,7 @@ export function BookmarkButton({ message }: Props) {
           toast.success(t('chat.promptGallery.saved'));
         }}
         onClose={() => setDialogOpen(false)}
+        onError={() => toast.error(t('common.status.error.default'))}
       />
     </>
   );

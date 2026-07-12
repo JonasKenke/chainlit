@@ -681,6 +681,18 @@ class DynamoDBDataLayer(BaseDataLayer):
 
     # ---- Prompt Gallery ----
 
+    @staticmethod
+    def _prompt_from_item(item: Dict[str, Any]) -> PromptDict:
+        return PromptDict(
+            id=item["id"],
+            userId=item["userId"],
+            title=item["title"],
+            content=item["content"],
+            isShared=bool(item.get("isShared", False)),
+            createdAt=item["createdAt"],
+            updatedAt=item["updatedAt"],
+        )
+
     async def create_prompt(self, prompt: PromptDict) -> PromptDict:
         _logger.info("DynamoDB: create_prompt, id=%s", prompt["id"])
 
@@ -716,21 +728,12 @@ class DynamoDBDataLayer(BaseDataLayer):
             )
 
             for item in response.get("Items", []):
-                deserialized = self._deserialize_item(item)
-                prompt = PromptDict(
-                    id=deserialized["id"],
-                    userId=deserialized["userId"],
-                    title=deserialized["title"],
-                    content=deserialized["content"],
-                    isShared=bool(deserialized.get("isShared", False)),
-                    createdAt=deserialized["createdAt"],
-                    updatedAt=deserialized["updatedAt"],
-                )
-                results.append(prompt)
+                results.append(self._prompt_from_item(self._deserialize_item(item)))
 
-            if "LastEvaluatedKey" not in response:
+            last_key = response.get("LastEvaluatedKey")
+            if not last_key:
                 break
-            cursor["ExclusiveStartKey"] = response["LastEvaluatedKey"]
+            cursor["ExclusiveStartKey"] = last_key
 
         results.sort(key=lambda p: p["createdAt"], reverse=True)
         return results
@@ -738,33 +741,29 @@ class DynamoDBDataLayer(BaseDataLayer):
     async def get_prompt(self, prompt_id: str) -> Optional[PromptDict]:
         _logger.info("DynamoDB: get_prompt, id=%s", prompt_id)
 
-        response = self.client.scan(
-            TableName=self.table_name,
-            FilterExpression="#id = :prompt_id AND begins_with(#sk, :sk_prefix)",
-            ExpressionAttributeNames={
+        scan_args: Dict[str, Any] = {
+            "TableName": self.table_name,
+            "FilterExpression": "#id = :prompt_id AND begins_with(#sk, :sk_prefix)",
+            "ExpressionAttributeNames": {
                 "#id": "id",
                 "#sk": "SK",
             },
-            ExpressionAttributeValues={
+            "ExpressionAttributeValues": {
                 ":prompt_id": self._type_serializer.serialize(prompt_id),
                 ":sk_prefix": self._type_serializer.serialize("PROMPT#"),
             },
-        )
+        }
 
-        items = response.get("Items", [])
-        if not items:
-            return None
+        while True:
+            response = self.client.scan(**scan_args)
+            items = response.get("Items", [])
+            if items:
+                return self._prompt_from_item(self._deserialize_item(items[0]))
 
-        deserialized = self._deserialize_item(items[0])
-        return PromptDict(
-            id=deserialized["id"],
-            userId=deserialized["userId"],
-            title=deserialized["title"],
-            content=deserialized["content"],
-            isShared=bool(deserialized.get("isShared", False)),
-            createdAt=deserialized["createdAt"],
-            updatedAt=deserialized["updatedAt"],
-        )
+            last_key = response.get("LastEvaluatedKey")
+            if not last_key:
+                return None
+            scan_args["ExclusiveStartKey"] = last_key
 
     async def update_prompt(self, prompt: PromptDict) -> PromptDict:
         _logger.info("DynamoDB: update_prompt, id=%s", prompt["id"])
@@ -787,7 +786,7 @@ class DynamoDBDataLayer(BaseDataLayer):
         _logger.info("DynamoDB: delete_prompt, id=%s", prompt_id)
 
         try:
-            self.client.delete_item(
+            response = self.client.delete_item(
                 TableName=self.table_name,
                 Key=self._serialize_item(
                     {
@@ -795,8 +794,9 @@ class DynamoDBDataLayer(BaseDataLayer):
                         "SK": f"PROMPT#{prompt_id}",
                     }
                 ),
+                ReturnValues="ALL_OLD",
             )
-            return True
+            return bool(response.get("Attributes"))
         except Exception as e:
             _logger.warning("DynamoDB: delete_prompt error: %s", e)
             return False
