@@ -25,7 +25,6 @@ from chainlit.types import (
     PageInfo,
     PaginatedResponse,
     Pagination,
-    PromptDict,
     ThreadDict,
     ThreadFilter,
 )
@@ -678,128 +677,6 @@ class DynamoDBDataLayer(BaseDataLayer):
 
         favorite_steps.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
         return cast(List["StepDict"], favorite_steps)
-
-    # ---- Prompt Gallery ----
-
-    @staticmethod
-    def _prompt_from_item(item: Dict[str, Any]) -> PromptDict:
-        return PromptDict(
-            id=item["id"],
-            userId=item["userId"],
-            title=item["title"],
-            content=item["content"],
-            isShared=bool(item.get("isShared", False)),
-            createdAt=item["createdAt"],
-            updatedAt=item["updatedAt"],
-        )
-
-    async def create_prompt(self, prompt: PromptDict) -> PromptDict:
-        _logger.info("DynamoDB: create_prompt, id=%s", prompt["id"])
-
-        item: Dict[str, Any] = dict(prompt)
-        item["PK"] = f"USER#{prompt['userId']}"
-        item["SK"] = f"PROMPT#{prompt['id']}"
-
-        self.client.put_item(
-            TableName=self.table_name,
-            Item=self._serialize_item(item),
-        )
-        return prompt
-
-    async def list_prompts(self, user_id: str) -> List[PromptDict]:
-        _logger.info("DynamoDB: list_prompts, user_id=%s", user_id)
-
-        results: List[PromptDict] = []
-        cursor: Dict[str, Any] = {}
-
-        while True:
-            response = self.client.query(
-                TableName=self.table_name,
-                KeyConditionExpression="#pk = :pk AND begins_with(#sk, :sk_prefix)",
-                ExpressionAttributeNames={
-                    "#pk": "PK",
-                    "#sk": "SK",
-                },
-                ExpressionAttributeValues={
-                    ":pk": self._type_serializer.serialize(f"USER#{user_id}"),
-                    ":sk_prefix": self._type_serializer.serialize("PROMPT#"),
-                },
-                **cursor,
-            )
-
-            for item in response.get("Items", []):
-                results.append(self._prompt_from_item(self._deserialize_item(item)))
-
-            last_key = response.get("LastEvaluatedKey")
-            if not last_key:
-                break
-            cursor["ExclusiveStartKey"] = last_key
-
-        results.sort(key=lambda p: p["createdAt"], reverse=True)
-        return results
-
-    async def get_prompt(self, prompt_id: str) -> Optional[PromptDict]:
-        _logger.info("DynamoDB: get_prompt, id=%s", prompt_id)
-
-        scan_args: Dict[str, Any] = {
-            "TableName": self.table_name,
-            "FilterExpression": "#id = :prompt_id AND begins_with(#sk, :sk_prefix)",
-            "ExpressionAttributeNames": {
-                "#id": "id",
-                "#sk": "SK",
-            },
-            "ExpressionAttributeValues": {
-                ":prompt_id": self._type_serializer.serialize(prompt_id),
-                ":sk_prefix": self._type_serializer.serialize("PROMPT#"),
-            },
-        }
-
-        while True:
-            response = self.client.scan(**scan_args)
-            items = response.get("Items", [])
-            if items:
-                return self._prompt_from_item(self._deserialize_item(items[0]))
-
-            last_key = response.get("LastEvaluatedKey")
-            if not last_key:
-                return None
-            scan_args["ExclusiveStartKey"] = last_key
-
-    async def update_prompt(self, prompt: PromptDict) -> PromptDict:
-        _logger.info("DynamoDB: update_prompt, id=%s", prompt["id"])
-
-        self._update_item(
-            key={
-                "PK": f"USER#{prompt['userId']}",
-                "SK": f"PROMPT#{prompt['id']}",
-            },
-            updates={
-                "title": prompt["title"],
-                "content": prompt["content"],
-                "isShared": prompt["isShared"],
-                "updatedAt": prompt["updatedAt"],
-            },
-        )
-        return prompt
-
-    async def delete_prompt(self, prompt_id: str, user_id: str) -> bool:
-        _logger.info("DynamoDB: delete_prompt, id=%s", prompt_id)
-
-        try:
-            response = self.client.delete_item(
-                TableName=self.table_name,
-                Key=self._serialize_item(
-                    {
-                        "PK": f"USER#{user_id}",
-                        "SK": f"PROMPT#{prompt_id}",
-                    }
-                ),
-                ReturnValues="ALL_OLD",
-            )
-            return bool(response.get("Attributes"))
-        except Exception as e:
-            _logger.warning("DynamoDB: delete_prompt error: %s", e)
-            return False
 
     async def build_debug_url(self) -> str:
         return ""

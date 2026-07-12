@@ -39,7 +39,6 @@ from chainlit.auth import (
     decode_jwt,
     get_configuration,
     get_current_user,
-    get_optional_current_user,
     require_login,
 )
 from chainlit.auth.cookie import (
@@ -761,7 +760,6 @@ async def oauth_azure_hf_callback(
 
 GenericUser = Union[User, PersistedUser, None]
 UserParam = Annotated[GenericUser, Depends(get_current_user)]
-OptionalUserParam = Annotated[GenericUser, Depends(get_optional_current_user)]
 
 _PROMPT_GALLERY_METHODS = (
     "create_prompt",
@@ -1229,7 +1227,6 @@ async def share_prompt(
 async def get_shared_prompt(
     request: Request,
     prompt_id: str,
-    current_user: OptionalUserParam,
 ):
     """Fetch a shared prompt anonymously. Returns 404 if not shared."""
     _prompt_gallery_enabled()
@@ -1246,7 +1243,7 @@ async def get_shared_prompt(
 async def add_shared_prompt(
     request: Request,
     prompt_id: str,
-    current_user: OptionalUserParam,
+    current_user: UserParam,
 ):
     """Copy a shared prompt into the current user's gallery."""
     _prompt_gallery_enabled()

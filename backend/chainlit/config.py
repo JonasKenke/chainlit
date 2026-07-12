@@ -559,23 +559,6 @@ class ChainlitConfig(BaseSettings):
         return type(self).model_validate(merged)
 
 
-def _merge_translation_keys(base: dict, additions: dict) -> tuple:
-    """Recursively add keys from *additions* that are absent in *base*.
-
-    Returns (merged_dict, was_anything_added).
-    User-supplied values in *base* always win - this only fills gaps.
-    """
-    added = False
-    for k, v in additions.items():
-        if k not in base:
-            base[k] = v
-            added = True
-        elif isinstance(v, dict) and isinstance(base[k], dict):
-            _, sub_added = _merge_translation_keys(base[k], v)
-            added = added or sub_added
-    return base, added
-
-
 def init_config(log: bool = False):
     """Initialize the configuration file if it doesn't exist."""
     if not os.path.exists(config_file):
@@ -600,19 +583,28 @@ def init_config(log: bool = False):
                 pkg_translation = json.load(f)
             if not os.path.exists(dst):
                 with open(dst, "w", encoding="utf-8") as f:
-                    json.dump(pkg_translation, f, indent=4, ensure_ascii=False)
+                    json.dump(pkg_translation, f, indent=4)
                 logger.info(f"Created default translation file at {dst}")
             else:
                 # Merge: add any keys from the package that are missing in the app file
                 with open(dst, encoding="utf-8") as f:
                     app_translation = json.load(f)
 
-                merged, added = _merge_translation_keys(
-                    app_translation, pkg_translation
-                )
+                def _deep_merge(base: dict, additions: dict) -> tuple:
+                    added = False
+                    for k, v in additions.items():
+                        if k not in base:
+                            base[k] = v
+                            added = True
+                        elif isinstance(v, dict) and isinstance(base[k], dict):
+                            _, sub_added = _deep_merge(base[k], v)
+                            added = added or sub_added
+                    return base, added
+
+                merged, added = _deep_merge(app_translation, pkg_translation)
                 if added:
                     with open(dst, "w", encoding="utf-8") as f:
-                        json.dump(merged, f, indent=4, ensure_ascii=False)
+                        json.dump(merged, f, indent=4)
                     logger.info(f"Updated translation file with new keys at {dst}")
 
 

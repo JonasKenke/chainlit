@@ -22,7 +22,7 @@ from chainlit.data.sql_alchemy import SQLAlchemyDataLayer
 _DB_URI = "sqlite+aiosqlite:///demo.db"
 
 # Minimal DDL — only the tables the demo actually uses.
-# Minimal DDL for the demo — a full Alembic migration is not needed here.
+# ponytail: inline DDL beats a full Alembic migration for a demo.
 _SETUP_SQL = """
 CREATE TABLE IF NOT EXISTS users (
     "id" TEXT PRIMARY KEY,
