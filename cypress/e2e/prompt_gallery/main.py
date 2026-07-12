@@ -10,9 +10,10 @@ from chainlit.data.sql_alchemy import SQLAlchemyDataLayer
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-# Use in-memory SQLite so each test run starts fresh.
-_DB_URI = "sqlite+aiosqlite://"
-_DB_PATH = None
+# Keep setup and the data layer on the same SQLite database.  An in-memory
+# database would be lost when the setup engine is disposed.
+_DB_PATH = os.path.join(os.path.dirname(__file__), "test_e2e.db")
+_DB_URI = f"sqlite+aiosqlite:///{_DB_PATH}"
 
 _SETUP_SQL = """
 CREATE TABLE IF NOT EXISTS users (

@@ -39,6 +39,7 @@ from chainlit.auth import (
     decode_jwt,
     get_configuration,
     get_current_user,
+    require_login,
 )
 from chainlit.auth.cookie import (
     clear_auth_cookie,
@@ -1052,11 +1053,14 @@ async def get_shared_thread(
 
 
 async def _get_user_id(current_user: GenericUser, data_layer: "BaseDataLayer") -> str:
-    """Return the persisted user id for the current user. Requires authentication."""
+    """Return the persisted user id, looking it up when current_user is an unpersisted User."""
     if isinstance(current_user, PersistedUser):
         return current_user.id
     if current_user is None:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        if require_login():
+            raise HTTPException(status_code=401, detail="Unauthorized")
+        # No-auth mode: use a stable anonymous user ID so prompt gallery works.
+        return "anonymous"
     persisted = await data_layer.get_user(identifier=current_user.identifier)
     if not persisted:
         raise HTTPException(status_code=401, detail="Unauthorized")

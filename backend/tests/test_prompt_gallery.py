@@ -84,8 +84,9 @@ def test_create_prompt_feature_disabled(test_client, monkeypatch):
 
 
 def test_list_prompts_no_auth(test_client, monkeypatch):
-    """With no user, prompt gallery requires authentication (returns 401)."""
+    """No-auth apps use one stable gallery for all anonymous sessions."""
     _enable_gallery(monkeypatch)
+    monkeypatch.setattr("chainlit.server.require_login", lambda: False)
     app.dependency_overrides[get_current_user] = lambda: None
     try:
         with patch("chainlit.server.get_data_layer") as mock_dl:
@@ -93,7 +94,9 @@ def test_list_prompts_no_auth(test_client, monkeypatch):
             dl_mock.list_prompts = AsyncMock(return_value=[])
             mock_dl.return_value = dl_mock
             response = test_client.get("/project/prompts")
-        assert response.status_code == 401
+        assert response.status_code == 200
+        assert response.json() == []
+        dl_mock.list_prompts.assert_awaited_once_with("anonymous")
     finally:
         app.dependency_overrides.pop(get_current_user, None)
 
