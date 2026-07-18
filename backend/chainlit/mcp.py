@@ -1,5 +1,5 @@
 import shlex
-from typing import Dict, Literal, Optional, Union
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -16,18 +16,18 @@ class StdioMcpConnection(BaseModel):
 class SseMcpConnection(BaseModel):
     name: str
     url: str
-    headers: Optional[Dict[str, str]] = None
+    headers: dict[str, str] | None = None
     clientType: Literal["sse"] = "sse"
 
 
 class HttpMcpConnection(BaseModel):
     name: str
     url: str
-    headers: Optional[Dict[str, str]] = None
+    headers: dict[str, str] | None = None
     clientType: Literal["streamable-http"] = "streamable-http"
 
 
-McpConnection = Union[StdioMcpConnection, SseMcpConnection, HttpMcpConnection]
+McpConnection = StdioMcpConnection | SseMcpConnection | HttpMcpConnection
 
 
 def validate_mcp_command(command_string: str):

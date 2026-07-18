@@ -1,6 +1,6 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Union
+from typing import Any
 
 storage_expiry_time = int(os.getenv("STORAGE_EXPIRY_TIME", 3600))
 
@@ -12,11 +12,11 @@ class BaseStorageClient(ABC):
     async def upload_file(
         self,
         object_key: str,
-        data: Union[bytes, str],
+        data: bytes | str,
         mime: str = "application/octet-stream",
         overwrite: bool = True,
         content_disposition: str | None = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         pass
 
     @abstractmethod

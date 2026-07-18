@@ -1,7 +1,7 @@
 import datetime
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Callable
 from unittest.mock import AsyncMock, Mock
 
 import pytest

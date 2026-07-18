@@ -1,9 +1,9 @@
 import asyncio
 import threading
-from typing import Any, Coroutine, ParamSpec, TypeVar
+from collections.abc import Coroutine
+from typing import Any, ParamSpec, TypeVar
 
 from asyncer import asyncify
-from syncer import sync
 
 from chainlit.context import context_var
 
@@ -15,7 +15,11 @@ T = TypeVar("T")
 
 
 def run_sync(co: Coroutine[Any, Any, T_Retval]) -> T_Retval:
-    """Run the coroutine synchronously."""
+    """Run the coroutine synchronously.
+
+    Requires nest_asyncio to be applied when called from within a running
+    event loop (which Chainlit does at CLI startup).
+    """
 
     # Copy the current context
     current_context = context_var.get()
@@ -28,7 +32,9 @@ def run_sync(co: Coroutine[Any, Any, T_Retval]) -> T_Retval:
 
     # Execute from the main thread in the main event loop
     if threading.current_thread() == threading.main_thread():
-        return sync(context_preserving_coroutine())
+        return asyncio.get_running_loop().run_until_complete(
+            context_preserving_coroutine()
+        )
     else:  # Execute from a thread in the main event loop
         result = asyncio.run_coroutine_threadsafe(
             context_preserving_coroutine(), loop=current_context.loop

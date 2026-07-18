@@ -4,7 +4,7 @@ import mimetypes
 import os
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal
 
 import filetype
 
@@ -51,8 +51,8 @@ class TeamsEmitter(BaseChainlitEmitter):
             return
 
         persisted_file = self.session.files.get(element_dict.get("chainlitKey") or "")
-        attachment: Optional[Attachment] = None
-        mime: Optional[str] = None
+        attachment: Attachment | None = None
+        mime: str | None = None
 
         element_name: str = element_dict.get("name", "Untitled")
 
@@ -145,7 +145,7 @@ def init_teams_context(
     return context
 
 
-users_by_teams_id: Dict[str, Union[User, PersistedUser]] = {}
+users_by_teams_id: dict[str, User | PersistedUser] = {}
 
 USER_PREFIX = "teams_"
 
@@ -183,7 +183,7 @@ async def download_teams_file(url: str):
 
 
 async def download_teams_files(
-    session: HTTPSession, attachments: Optional[List[Attachment]] = None
+    session: HTTPSession, attachments: list[Attachment] | None = None
 ):
     if not attachments:
         return []

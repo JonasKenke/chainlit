@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import json
 import ssl
 import uuid
 from dataclasses import asdict
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import aiofiles
 import aiohttp
@@ -38,11 +40,11 @@ class SQLAlchemyDataLayer(BaseDataLayer):
     def __init__(
         self,
         conninfo: str,
-        connect_args: Optional[dict[str, Any]] = None,
+        connect_args: dict[str, Any] | None = None,
         ssl_require: bool = False,
-        storage_provider: Optional[BaseStorageClient] = None,
-        user_thread_limit: Optional[int] = 1000,
-        show_logger: Optional[bool] = False,
+        storage_provider: BaseStorageClient | None = None,
+        user_thread_limit: int | None = 1000,
+        show_logger: bool | None = False,
     ):
         self._conninfo = conninfo
         self.user_thread_limit = user_thread_limit
@@ -62,7 +64,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
             bind=self.engine, expire_on_commit=False, class_=AsyncSession
         )  # type: ignore
         if storage_provider:
-            self.storage_provider: Optional[BaseStorageClient] = storage_provider
+            self.storage_provider: BaseStorageClient | None = storage_provider
             if self.show_logger:
                 logger.info("SQLAlchemyDataLayer storage client initialized")
         else:
@@ -77,7 +79,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
     ###### SQL Helpers ######
     async def execute_sql(
         self, query: str, parameters: dict
-    ) -> Union[List[Dict[str, Any]], int, None]:
+    ) -> list[dict[str, Any]] | int | None:
         parameterized_query = text(query)
         async with self.async_session() as session:
             try:
@@ -116,7 +118,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         return obj
 
     ###### User ######
-    async def get_user(self, identifier: str) -> Optional[PersistedUser]:
+    async def get_user(self, identifier: str) -> PersistedUser | None:
         if self.show_logger:
             logger.info(f"SQLAlchemy: get_user, identifier={identifier}")
         query = "SELECT * FROM users WHERE identifier = :identifier"
@@ -155,7 +157,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
 
         return result[0]["identifier"]
 
-    async def _get_user_id_by_thread(self, thread_id: str) -> Optional[str]:
+    async def _get_user_id_by_thread(self, thread_id: str) -> str | None:
         if self.show_logger:
             logger.info(f"SQLAlchemy: _get_user_id_by_thread, thread_id={thread_id}")
         query = """SELECT "userId" FROM threads WHERE id = :thread_id"""
@@ -167,11 +169,11 @@ class SQLAlchemyDataLayer(BaseDataLayer):
 
         return None
 
-    async def create_user(self, user: User) -> Optional[PersistedUser]:
+    async def create_user(self, user: User) -> PersistedUser | None:
         if self.show_logger:
             logger.info(f"SQLAlchemy: create_user, user_identifier={user.identifier}")
-        existing_user: Optional[PersistedUser] = await self.get_user(user.identifier)
-        user_dict: Dict[str, Any] = {
+        existing_user: PersistedUser | None = await self.get_user(user.identifier)
+        user_dict: dict[str, Any] = {
             "identifier": str(user.identifier),
             "metadata": json.dumps(user.metadata) or {},
         }
@@ -204,10 +206,10 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                 return author_identifier
         raise ValueError(f"Author not found for thread_id {thread_id}")
 
-    async def get_thread(self, thread_id: str) -> Optional[ThreadDict]:
+    async def get_thread(self, thread_id: str) -> ThreadDict | None:
         if self.show_logger:
             logger.info(f"SQLAlchemy: get_thread, thread_id={thread_id}")
-        user_threads: Optional[List[ThreadDict]] = await self.get_all_user_threads(
+        user_threads: list[ThreadDict] | None = await self.get_all_user_threads(
             thread_id=thread_id
         )
         if user_threads:
@@ -218,10 +220,10 @@ class SQLAlchemyDataLayer(BaseDataLayer):
     async def update_thread(
         self,
         thread_id: str,
-        name: Optional[str] = None,
-        user_id: Optional[str] = None,
-        metadata: Optional[Dict] = None,
-        tags: Optional[List[str]] = None,
+        name: str | None = None,
+        user_id: str | None = None,
+        metadata: dict | None = None,
+        tags: list[str] | None = None,
     ):
         if self.show_logger:
             logger.info(f"SQLAlchemy: update_thread, thread_id={thread_id}")
@@ -327,7 +329,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
             )
         if not filters.userId:
             raise ValueError("userId is required")
-        all_user_threads: List[ThreadDict] = (
+        all_user_threads: list[ThreadDict] = (
             await self.get_all_user_threads(user_id=filters.userId) or []
         )
 
@@ -381,7 +383,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
 
     ###### Steps ######
     @queue_until_user_message()
-    async def create_step(self, step_dict: "StepDict"):
+    async def create_step(self, step_dict: StepDict):
         await self.update_thread(step_dict["threadId"])
 
         if self.show_logger:
@@ -413,7 +415,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         await self.execute_sql(query=query, parameters=parameters)
 
     @queue_until_user_message()
-    async def update_step(self, step_dict: "StepDict"):
+    async def update_step(self, step_dict: StepDict):
         if self.show_logger:
             logger.info(f"SQLAlchemy: update_step, step_id={step_dict.get('id')}")
         await self.create_step(step_dict)
@@ -431,7 +433,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         await self.execute_sql(query=elements_query, parameters=parameters)
         await self.execute_sql(query=steps_query, parameters=parameters)
 
-    async def get_step(self, step_id: str) -> Optional["StepDict"]:
+    async def get_step(self, step_id: str) -> StepDict | None:
         if self.show_logger:
             logger.info(f"SQLAlchemy: get_step, step_id={step_id}")
         steps_feedbacks_query = """
@@ -540,20 +542,18 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         return True
 
     ###### Elements ######
-    async def get_element(
-        self, thread_id: str, element_id: str
-    ) -> Optional["ElementDict"]:
+    async def get_element(self, thread_id: str, element_id: str) -> ElementDict | None:
         if self.show_logger:
             logger.info(
                 f"SQLAlchemy: get_element, thread_id={thread_id}, element_id={element_id}"
             )
         query = """SELECT * FROM elements WHERE "threadId" = :thread_id AND "id" = :element_id"""
         parameters = {"thread_id": thread_id, "element_id": element_id}
-        element: Union[List[Dict[str, Any]], int, None] = await self.execute_sql(
+        element: list[dict[str, Any]] | int | None = await self.execute_sql(
             query=query, parameters=parameters
         )
         if isinstance(element, list) and element:
-            element_dict: Dict[str, Any] = element[0]
+            element_dict: dict[str, Any] = element[0]
             return ElementDict(
                 id=element_dict["id"],
                 threadId=element_dict.get("threadId"),
@@ -576,7 +576,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
             return None
 
     @queue_until_user_message()
-    async def create_element(self, element: "Element"):
+    async def create_element(self, element: Element):
         if self.show_logger:
             logger.info(f"SQLAlchemy: create_element, element_id = {element.id}")
 
@@ -588,7 +588,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         if not element.for_id:
             return
 
-        content: Optional[Union[bytes, str]] = None
+        content: bytes | str | None = None
 
         if element.path:
             async with aiofiles.open(element.path, "rb") as f:
@@ -643,7 +643,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         await self.execute_sql(query=query, parameters=element_dict_cleaned)
 
     @queue_until_user_message()
-    async def delete_element(self, element_id: str, thread_id: Optional[str] = None):
+    async def delete_element(self, element_id: str, thread_id: str | None = None):
         if self.show_logger:
             logger.info(f"SQLAlchemy: delete_element, element_id={element_id}")
 
@@ -664,8 +664,8 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         await self.execute_sql(query=query, parameters=parameters)
 
     async def get_all_user_threads(
-        self, user_id: Optional[str] = None, thread_id: Optional[str] = None
-    ) -> Optional[List[ThreadDict]]:
+        self, user_id: str | None = None, thread_id: str | None = None
+    ) -> list[ThreadDict] | None:
         """Fetch all user threads up to self.user_thread_limit, or one thread by id if thread_id is provided."""
         if self.show_logger:
             logger.info("SQLAlchemy: get_all_user_threads")
@@ -869,7 +869,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
 
         return list(thread_dicts.values())
 
-    async def get_favorite_steps(self, user_id: str) -> List[StepDict]:
+    async def get_favorite_steps(self, user_id: str) -> list[StepDict]:
         if self.show_logger:
             logger.info(f"SQLAlchemy: get_favorite_steps, user_id={user_id}")
 

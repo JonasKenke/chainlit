@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from typing import Optional
 
 from chainlit.logger import logger
 
@@ -34,7 +33,7 @@ def init_markdown(root: str):
             logger.info(f"Created default chainlit markdown file at {chainlit_md_file}")
 
 
-def get_markdown_str(root: str, language: str) -> Optional[str]:
+def get_markdown_str(root: str, language: str) -> str | None:
     """Get the chainlit.md file as a string."""
     root_path = Path(root)
     translated_chainlit_md_path = root_path / f"chainlit_{language}.md"

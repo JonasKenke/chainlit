@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from pydantic import Field
 from pydantic.dataclasses import dataclass
@@ -11,17 +11,17 @@ from chainlit.input_widget import InputWidget, Tab
 class ChatSettings:
     """Useful to create chat settings that the user can change."""
 
-    inputs: List[InputWidget] | List[Tab] = Field(default_factory=list, exclude=True)
+    inputs: list[InputWidget] | list[Tab] = Field(default_factory=list, exclude=True)
 
     def __init__(
         self,
-        inputs: List[InputWidget] | List[Tab],
+        inputs: list[InputWidget] | list[Tab],
     ) -> None:
         self.inputs = inputs
 
     def settings(self):
         def collect_settings(
-            values: dict[str, Any], inputs: List[InputWidget] | List[Tab]
+            values: dict[str, Any], inputs: list[InputWidget] | list[Tab]
         ) -> None:
             for input in inputs:
                 if isinstance(input, Tab):
@@ -33,7 +33,7 @@ class ChatSettings:
         collect_settings(settings, self.inputs)
         return settings
 
-    def _inputs_as_dicts(self) -> List[dict[str, Any]]:
+    def _inputs_as_dicts(self) -> list[dict[str, Any]]:
         return [input_widget.to_dict() for input_widget in self.inputs]
 
     async def refresh(self):

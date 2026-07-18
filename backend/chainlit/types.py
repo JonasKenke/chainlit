@@ -3,15 +3,11 @@ from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
     Generic,
-    List,
     Literal,
-    Optional,
     Protocol,
     TypedDict,
     TypeVar,
-    Union,
 )
 
 if TYPE_CHECKING:
@@ -42,18 +38,18 @@ ToastType = Literal["info", "success", "warning", "error"]
 class ThreadDict(TypedDict):
     id: str
     createdAt: str
-    name: Optional[str]
-    userId: Optional[str]
-    userIdentifier: Optional[str]
-    tags: Optional[List[str]]
-    metadata: Optional[Dict]
-    steps: List["StepDict"]
-    elements: Optional[List["ElementDict"]]
+    name: str | None
+    userId: str | None
+    userIdentifier: str | None
+    tags: list[str] | None
+    metadata: dict | None
+    steps: list["StepDict"]
+    elements: list["ElementDict"] | None
 
 
 class Pagination(BaseModel):
     first: int
-    cursor: Optional[str] = None
+    cursor: str | None = None
 
 
 class ThreadFilter(BaseModel):
@@ -65,8 +61,8 @@ class ThreadFilter(BaseModel):
 @dataclass
 class PageInfo:
     hasNextPage: bool
-    startCursor: Optional[str]
-    endCursor: Optional[str]
+    startCursor: str | None
+    endCursor: str | None
 
     def to_dict(self):
         return {
@@ -76,7 +72,7 @@ class PageInfo:
         }
 
     @classmethod
-    def from_dict(cls, page_info_dict: Dict) -> "PageInfo":
+    def from_dict(cls, page_info_dict: dict) -> "PageInfo":
         hasNextPage = page_info_dict.get("hasNextPage", False)
         startCursor = page_info_dict.get("startCursor", None)
         endCursor = page_info_dict.get("endCursor", None)
@@ -97,7 +93,7 @@ class HasFromDict(Protocol[T]):
 @dataclass
 class PaginatedResponse(Generic[T]):
     pageInfo: PageInfo
-    data: List[T]
+    data: list[T]
 
     def to_dict(self):
         return {
@@ -110,7 +106,7 @@ class PaginatedResponse(Generic[T]):
 
     @classmethod
     def from_dict(
-        cls, paginated_response_dict: Dict, the_class: HasFromDict[T]
+        cls, paginated_response_dict: dict, the_class: HasFromDict[T]
     ) -> "PaginatedResponse[T]":
         pageInfo = PageInfo.from_dict(paginated_response_dict.get("pageInfo", {}))
 
@@ -121,14 +117,14 @@ class PaginatedResponse(Generic[T]):
 
 @dataclass
 class FileSpec(DataClassJsonMixin):
-    accept: Union[List[str], Dict[str, List[str]]]
+    accept: list[str] | dict[str, list[str]]
     max_files: int
     max_size_mb: int
 
 
 @dataclass
 class ActionSpec(DataClassJsonMixin):
-    keys: List[str]
+    keys: list[str]
 
 
 @dataclass
@@ -171,7 +167,7 @@ class FileDict(TypedDict):
 
 class MessagePayload(TypedDict):
     message: "StepDict"
-    fileReferences: Optional[List[FileReference]]
+    fileReferences: list[FileReference] | None
 
 
 class InputAudioChunkPayload(TypedDict):
@@ -206,7 +202,7 @@ class AskFileResponse:
 
 class AskActionResponse(TypedDict):
     name: str
-    payload: Dict
+    payload: dict
     label: str
     tooltip: str
     forId: str
@@ -241,7 +237,7 @@ class GetThreadsRequest(BaseModel):
 
 
 class CallActionRequest(BaseModel):
-    action: Dict
+    action: dict
     sessionId: str
 
 
@@ -258,7 +254,7 @@ class ConnectSseMCPRequest(BaseModel):
     name: str
     url: str
     # Optional HTTP headers to forward to the MCP transport (e.g. Authorization)
-    headers: Optional[Dict[str, str]] = None
+    headers: dict[str, str] | None = None
 
 
 class ConnectStreamableHttpMCPRequest(BaseModel):
@@ -267,12 +263,12 @@ class ConnectStreamableHttpMCPRequest(BaseModel):
     name: str
     url: str
     # Optional HTTP headers to forward to the MCP transport (e.g. Authorization)
-    headers: Dict[str, str] | None = None
+    headers: dict[str, str] | None = None
 
 
-ConnectMCPRequest = Union[
-    ConnectStdioMCPRequest, ConnectSseMCPRequest, ConnectStreamableHttpMCPRequest
-]
+ConnectMCPRequest = (
+    ConnectStdioMCPRequest | ConnectSseMCPRequest | ConnectStreamableHttpMCPRequest
+)
 
 
 class DisconnectMCPRequest(BaseModel):
@@ -281,7 +277,7 @@ class DisconnectMCPRequest(BaseModel):
 
 
 class ElementRequest(BaseModel):
-    element: Dict
+    element: dict
     sessionId: str
 
 
@@ -296,8 +292,8 @@ class Starter(DataClassJsonMixin):
 
     label: str
     message: str
-    command: Optional[str] = None
-    icon: Optional[str] = None
+    command: str | None = None
+    icon: str | None = None
 
 
 @dataclass
@@ -305,8 +301,8 @@ class StarterCategory(DataClassJsonMixin):
     """A category/group of starters with an optional icon."""
 
     label: str
-    icon: Optional[str] = None
-    starters: List[Starter] = field(default_factory=list)
+    icon: str | None = None
+    starters: list[Starter] = field(default_factory=list)
 
 
 @dataclass
@@ -315,10 +311,10 @@ class ChatProfile(DataClassJsonMixin):
 
     name: str
     markdown_description: str
-    icon: Optional[str] = None
-    display_name: Optional[str] = None
+    icon: str | None = None
+    display_name: str | None = None
     default: bool = False
-    starters: Optional[List[Starter]] = None
+    starters: list[Starter] | None = None
     config_overrides: Any = None
 
 
@@ -333,27 +329,27 @@ class CommandDict(TypedDict):
     # The lucide icon name
     icon: str
     # Display the command as a button in the composer
-    button: Optional[bool]
+    button: bool | None
     # Whether the command will be persistent unless the user toggles it
-    persistent: Optional[bool]
+    persistent: bool | None
     # Whether the command should be pre-selected when loaded
-    selected: Optional[bool]
+    selected: bool | None
 
 
 class FeedbackDict(TypedDict):
     forId: str
-    id: Optional[str]
+    id: str | None
     value: Literal[0, 1]
-    comment: Optional[str]
+    comment: str | None
 
 
 @dataclass
 class Feedback:
     forId: str
     value: Literal[0, 1]
-    threadId: Optional[str] = None
-    id: Optional[str] = None
-    comment: Optional[str] = None
+    threadId: str | None = None
+    id: str | None = None
+    comment: str | None = None
 
 
 class UpdateFeedbackRequest(BaseModel):

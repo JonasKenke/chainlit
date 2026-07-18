@@ -3,8 +3,8 @@ import importlib
 import inspect
 import os
 from asyncio import CancelledError
+from collections.abc import Callable
 from datetime import datetime, timezone
-from typing import Callable
 
 import click
 from fastapi import FastAPI, Request

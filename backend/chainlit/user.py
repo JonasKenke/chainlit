@@ -1,4 +1,4 @@
-from typing import Dict, Literal, Optional, TypedDict
+from typing import Literal, TypedDict
 
 from dataclasses_json import DataClassJsonMixin
 from pydantic import Field
@@ -20,16 +20,16 @@ Provider = Literal[
 class UserDict(TypedDict):
     id: str
     identifier: str
-    display_name: Optional[str]
-    metadata: Dict
+    display_name: str | None
+    metadata: dict
 
 
 # Used when logging-in a user
 @dataclass
 class User(DataClassJsonMixin):
     identifier: str
-    display_name: Optional[str] = None
-    metadata: Dict = Field(default_factory=dict)
+    display_name: str | None = None
+    metadata: dict = Field(default_factory=dict)
 
 
 @dataclass

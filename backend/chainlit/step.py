@@ -3,9 +3,10 @@ import inspect
 import json
 import time
 import uuid
+from collections.abc import Callable
 from copy import deepcopy
 from functools import wraps
-from typing import Callable, Dict, List, Optional, TypedDict, Union
+from typing import TypedDict
 
 from literalai import BaseGeneration
 from literalai.observability.step import StepType, TrueStepType
@@ -47,26 +48,26 @@ class StepDict(TypedDict, total=False):
     type: StepType
     id: str
     threadId: str
-    parentId: Optional[str]
-    command: Optional[str]
-    modes: Optional[Dict[str, str]]
+    parentId: str | None
+    command: str | None
+    modes: dict[str, str] | None
     streaming: bool
-    waitForAnswer: Optional[bool]
-    isError: Optional[bool]
-    metadata: Dict
-    tags: Optional[List[str]]
+    waitForAnswer: bool | None
+    isError: bool | None
+    metadata: dict
+    tags: list[str] | None
     input: str
     output: str
-    createdAt: Optional[str]
-    start: Optional[str]
-    end: Optional[str]
-    generation: Optional[Dict]
-    showInput: Optional[Union[bool, str]]
-    defaultOpen: Optional[bool]
-    autoCollapse: Optional[bool]
-    language: Optional[str]
-    icon: Optional[str]
-    feedback: Optional[FeedbackDict]
+    createdAt: str | None
+    start: str | None
+    end: str | None
+    generation: dict | None
+    showInput: bool | str | None
+    defaultOpen: bool | None
+    autoCollapse: bool | None
+    language: str | None
+    icon: str | None
+    feedback: FeedbackDict | None
 
 
 def flatten_args_kwargs(func, args, kwargs):
@@ -77,17 +78,17 @@ def flatten_args_kwargs(func, args, kwargs):
 
 
 def step(
-    original_function: Optional[Callable] = None,
+    original_function: Callable | None = None,
     *,
-    name: Optional[str] = "",
+    name: str | None = "",
     type: TrueStepType = "undefined",
-    id: Optional[str] = None,
-    parent_id: Optional[str] = None,
-    tags: Optional[List[str]] = None,
-    metadata: Optional[Dict] = None,
-    language: Optional[str] = None,
-    icon: Optional[str] = None,
-    show_input: Union[bool, str] = "json",
+    id: str | None = None,
+    parent_id: str | None = None,
+    tags: list[str] | None = None,
+    metadata: dict | None = None,
+    language: str | None = None,
+    icon: str | None = None,
+    show_input: bool | str = "json",
     default_open: bool = False,
     auto_collapse: bool = False,
 ):
@@ -175,43 +176,43 @@ class Step:
     name: str
     type: TrueStepType
     id: str
-    parent_id: Optional[str]
+    parent_id: str | None
 
     streaming: bool
     persisted: bool
 
-    show_input: Union[bool, str]
+    show_input: bool | str
 
-    is_error: Optional[bool]
-    metadata: Dict
-    tags: Optional[List[str]]
+    is_error: bool | None
+    metadata: dict
+    tags: list[str] | None
     thread_id: str
-    created_at: Union[str, None]
-    start: Union[str, None]
-    end: Union[str, None]
-    generation: Optional[BaseGeneration]
-    language: Optional[str]
-    icon: Optional[str]
-    default_open: Optional[bool]
-    auto_collapse: Optional[bool]
-    elements: Optional[List[Element]]
+    created_at: str | None
+    start: str | None
+    end: str | None
+    generation: BaseGeneration | None
+    language: str | None
+    icon: str | None
+    default_open: bool | None
+    auto_collapse: bool | None
+    elements: list[Element] | None
     fail_on_persist_error: bool
 
     def __init__(
         self,
-        name: Optional[str] = config.ui.name,
+        name: str | None = config.ui.name,
         type: TrueStepType = "undefined",
-        id: Optional[str] = None,
-        parent_id: Optional[str] = None,
-        elements: Optional[List[Element]] = None,
-        metadata: Optional[Dict] = None,
-        tags: Optional[List[str]] = None,
-        language: Optional[str] = None,
-        icon: Optional[str] = None,
-        default_open: Optional[bool] = False,
-        auto_collapse: Optional[bool] = False,
-        show_input: Union[bool, str] = "json",
-        thread_id: Optional[str] = None,
+        id: str | None = None,
+        parent_id: str | None = None,
+        elements: list[Element] | None = None,
+        metadata: dict | None = None,
+        tags: list[str] | None = None,
+        language: str | None = None,
+        icon: str | None = None,
+        default_open: bool | None = False,
+        auto_collapse: bool | None = False,
+        show_input: bool | str = "json",
+        thread_id: str | None = None,
     ):
         time.sleep(0.001)
         self._input = ""
@@ -290,7 +291,7 @@ class Step:
         return self._input
 
     @input.setter
-    def input(self, content: Union[Dict, str]):
+    def input(self, content: dict | str):
         self._input = self._process_content(content, set_language=False)
 
     @property
@@ -298,7 +299,7 @@ class Step:
         return self._output
 
     @output.setter
-    def output(self, content: Union[Dict, str]):
+    def output(self, content: dict | str):
         self._output = self._process_content(content, set_language=True)
 
     def to_dict(self) -> StepDict:

@@ -1,5 +1,5 @@
 import os
-from typing import Literal, Optional, cast
+from typing import Literal, cast
 
 from fastapi import Request, Response
 from fastapi.exceptions import HTTPException
@@ -42,14 +42,14 @@ class OAuth2PasswordBearerWithCookie(SecurityBase):
     def __init__(
         self,
         tokenUrl: str,
-        scheme_name: Optional[str] = None,
+        scheme_name: str | None = None,
         auto_error: bool = True,
     ):
         self.tokenUrl = tokenUrl
         self.scheme_name = scheme_name or self.__class__.__name__
         self.auto_error = auto_error
 
-    async def __call__(self, request: Request) -> Optional[str]:
+    async def __call__(self, request: Request) -> str | None:
         # First try to get the token from the cookie
         token = get_token_from_cookies(request.cookies)
 
@@ -81,7 +81,7 @@ class OAuth2PasswordBearerWithCookie(SecurityBase):
         return token
 
 
-def _get_chunked_cookie(cookies: dict[str, str], name: str) -> Optional[str]:
+def _get_chunked_cookie(cookies: dict[str, str], name: str) -> str | None:
     # Gather all auth_chunk_i cookies, sorted by their index
     chunk_parts = []
 
@@ -99,7 +99,7 @@ def _get_chunked_cookie(cookies: dict[str, str], name: str) -> Optional[str]:
     return joined if joined != "" else None
 
 
-def get_token_from_cookies(cookies: dict[str, str]) -> Optional[str]:
+def get_token_from_cookies(cookies: dict[str, str]) -> str | None:
     """
     Read all chunk cookies and reconstruct the token
     """

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 from chainlit.types import (
     Feedback,
@@ -55,7 +55,7 @@ class BaseDataLayer(ABC):
 
     @queue_until_user_message()
     @abstractmethod
-    async def delete_element(self, element_id: str, thread_id: Optional[str] = None):
+    async def delete_element(self, element_id: str, thread_id: str | None = None):
         pass
 
     @queue_until_user_message()
@@ -88,17 +88,17 @@ class BaseDataLayer(ABC):
         pass
 
     @abstractmethod
-    async def get_thread(self, thread_id: str) -> "Optional[ThreadDict]":
+    async def get_thread(self, thread_id: str) -> Optional["ThreadDict"]:
         pass
 
     @abstractmethod
     async def update_thread(
         self,
         thread_id: str,
-        name: Optional[str] = None,
-        user_id: Optional[str] = None,
-        metadata: Optional[Dict] = None,
-        tags: Optional[List[str]] = None,
+        name: str | None = None,
+        user_id: str | None = None,
+        metadata: dict | None = None,
+        tags: list[str] | None = None,
     ):
         pass
 
@@ -111,7 +111,7 @@ class BaseDataLayer(ABC):
         pass
 
     @abstractmethod
-    async def get_favorite_steps(self, user_id: str) -> List["StepDict"]:
+    async def get_favorite_steps(self, user_id: str) -> list["StepDict"]:
         pass
 
     async def set_step_favorite(

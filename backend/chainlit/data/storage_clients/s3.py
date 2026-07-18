@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, Union
+from typing import Any
 
 import boto3  # type: ignore
 
@@ -39,11 +39,11 @@ class S3StorageClient(BaseStorageClient):
     def sync_upload_file(
         self,
         object_key: str,
-        data: Union[bytes, str],
+        data: bytes | str,
         mime: str = "application/octet-stream",
         overwrite: bool = True,
         content_disposition: str | None = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         try:
             if content_disposition is not None:
                 self.client.put_object(
@@ -67,11 +67,11 @@ class S3StorageClient(BaseStorageClient):
     async def upload_file(
         self,
         object_key: str,
-        data: Union[bytes, str],
+        data: bytes | str,
         mime: str = "application/octet-stream",
         overwrite: bool = True,
         content_disposition: str | None = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return await make_async(self.sync_upload_file)(
             object_key, data, mime, overwrite, content_disposition
         )

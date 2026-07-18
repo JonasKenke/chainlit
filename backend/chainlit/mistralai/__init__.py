@@ -1,5 +1,4 @@
 import asyncio
-from typing import Union
 
 from literalai import ChatGeneration, CompletionGeneration
 
@@ -11,9 +10,7 @@ from chainlit.utils import timestamp_utc
 def instrument_mistralai():
     from literalai.instrumentation.mistralai import instrument_mistralai
 
-    def on_new_generation(
-        generation: Union["ChatGeneration", "CompletionGeneration"], timing
-    ):
+    def on_new_generation(generation: "ChatGeneration | CompletionGeneration", timing):
         context = get_context()
 
         parent_id = None

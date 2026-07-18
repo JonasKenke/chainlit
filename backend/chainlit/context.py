@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import asyncio
 import uuid
 from contextvars import ContextVar
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING
 
 from lazify import LazyProxy
 
@@ -22,8 +24,8 @@ class ChainlitContextException(Exception):
 
 class ChainlitContext:
     loop: asyncio.AbstractEventLoop
-    emitter: "BaseChainlitEmitter"
-    session: Union["HTTPSession", "WebsocketSession"]
+    emitter: BaseChainlitEmitter
+    session: HTTPSession | WebsocketSession
 
     @property
     def current_step(self):
@@ -39,8 +41,8 @@ class ChainlitContext:
 
     def __init__(
         self,
-        session: Union["HTTPSession", "WebsocketSession"],
-        emitter: Optional["BaseChainlitEmitter"] = None,
+        session: HTTPSession | WebsocketSession,
+        emitter: BaseChainlitEmitter | None = None,
     ):
         from chainlit.emitter import BaseChainlitEmitter, ChainlitEmitter
 
@@ -56,12 +58,10 @@ class ChainlitContext:
 
 
 context_var: ContextVar[ChainlitContext] = ContextVar("chainlit")
-local_steps: ContextVar[Optional[List["Step"]]] = ContextVar(
-    "local_steps", default=None
-)
+local_steps: ContextVar[list[Step] | None] = ContextVar("local_steps", default=None)
 
 
-def init_ws_context(session_or_sid: Union[WebsocketSession, str]) -> ChainlitContext:
+def init_ws_context(session_or_sid: WebsocketSession | str) -> ChainlitContext:
     if not isinstance(session_or_sid, WebsocketSession):
         session = WebsocketSession.require(session_or_sid)
     else:
@@ -72,10 +72,10 @@ def init_ws_context(session_or_sid: Union[WebsocketSession, str]) -> ChainlitCon
 
 
 def init_http_context(
-    thread_id: Optional[str] = None,
-    user: Optional[Union["User", "PersistedUser"]] = None,
-    auth_token: Optional[str] = None,
-    user_env: Optional[Dict[str, str]] = None,
+    thread_id: str | None = None,
+    user: User | PersistedUser | None = None,
+    auth_token: str | None = None,
+    user_env: dict[str, str] | None = None,
     client_type: ClientType = "webapp",
 ) -> ChainlitContext:
     from chainlit.data import get_data_layer

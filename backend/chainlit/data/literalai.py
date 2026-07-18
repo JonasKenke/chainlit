@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import json
 
 # Deprecation warning for users of this provider
 import sys
 import warnings
-from typing import Dict, List, Literal, Optional, Union, cast
+from typing import Literal, cast
 
 import aiofiles
 from httpx import HTTPStatusError, RequestError
@@ -54,14 +56,14 @@ _show_deprecation_warning()
 
 class LiteralToChainlitConverter:
     @classmethod
-    def steptype_to_steptype(cls, step_type: Optional[StepType]) -> TrueStepType:
+    def steptype_to_steptype(cls, step_type: StepType | None) -> TrueStepType:
         return cast(TrueStepType, step_type or "undefined")
 
     @classmethod
     def score_to_feedbackdict(
         cls,
-        score: Optional[LiteralScore],
-    ) -> "Optional[FeedbackDict]":
+        score: LiteralScore | None,
+    ) -> FeedbackDict | None:
         if not score:
             return None
         return {
@@ -72,7 +74,7 @@ class LiteralToChainlitConverter:
         }
 
     @classmethod
-    def step_to_stepdict(cls, step: LiteralStep) -> "StepDict":
+    def step_to_stepdict(cls, step: LiteralStep) -> StepDict:
         metadata = step.metadata or {}
         input = (step.input or {}).get("content") or (
             json.dumps(step.input) if step.input and step.input != {} else ""
@@ -137,7 +139,7 @@ class LiteralToChainlitConverter:
 
     @classmethod
     def attachment_to_element(
-        cls, attachment: LiteralAttachment, thread_id: Optional[str] = None
+        cls, attachment: LiteralAttachment, thread_id: str | None = None
     ) -> Element:
         metadata = attachment.metadata or {}
         element_type = metadata.get("type", "file")
@@ -218,7 +220,7 @@ class LiteralToChainlitConverter:
 
 
 class LiteralDataLayer(BaseDataLayer):
-    def __init__(self, api_key: str, server: Optional[str]):
+    def __init__(self, api_key: str, server: str | None):
         from literalai import AsyncLiteralClient
 
         self.client = AsyncLiteralClient(api_key=api_key, url=server)
@@ -232,7 +234,7 @@ class LiteralDataLayer(BaseDataLayer):
             logger.error(f"Error building debug url: {e}")
             return ""
 
-    async def get_user(self, identifier: str) -> Optional[PersistedUser]:
+    async def get_user(self, identifier: str) -> PersistedUser | None:
         user = await self.client.api.get_user(identifier=identifier)
         if not user:
             return None
@@ -243,7 +245,7 @@ class LiteralDataLayer(BaseDataLayer):
             createdAt=user.created_at or "",
         )
 
-    async def create_user(self, user: User) -> Optional[PersistedUser]:
+    async def create_user(self, user: User) -> PersistedUser | None:
         _user = await self.client.api.get_user(identifier=user.identifier)
         if not _user:
             _user = await self.client.api.create_user(
@@ -301,7 +303,7 @@ class LiteralDataLayer(BaseDataLayer):
             logger.error(f"HTTP Request: error for {e.request.url!r}.")
 
     @queue_until_user_message()
-    async def create_element(self, element: "Element"):
+    async def create_element(self, element: Element):
         metadata = {
             "size": element.size,
             "language": element.language,
@@ -319,7 +321,7 @@ class LiteralDataLayer(BaseDataLayer):
         if not element.url:
             if element.path:
                 async with aiofiles.open(element.path, "rb") as f:
-                    content: Union[bytes, str] = await f.read()
+                    content: bytes | str = await f.read()
             elif element.content:
                 content = element.content
             else:
@@ -348,20 +350,18 @@ class LiteralDataLayer(BaseDataLayer):
             ]
         )
 
-    async def get_element(
-        self, thread_id: str, element_id: str
-    ) -> Optional["ElementDict"]:
+    async def get_element(self, thread_id: str, element_id: str) -> ElementDict | None:
         attachment = await self.client.api.get_attachment(id=element_id)
         if not attachment:
             return None
         return LiteralToChainlitConverter.attachment_to_elementdict(attachment)
 
     @queue_until_user_message()
-    async def delete_element(self, element_id: str, thread_id: Optional[str] = None):
+    async def delete_element(self, element_id: str, thread_id: str | None = None):
         await self.client.api.delete_attachment(id=element_id)
 
     @queue_until_user_message()
-    async def create_step(self, step_dict: "StepDict"):
+    async def create_step(self, step_dict: StepDict):
         metadata = dict(
             step_dict.get("metadata", {}),
             waitForAnswer=step_dict.get("waitForAnswer"),
@@ -392,7 +392,7 @@ class LiteralDataLayer(BaseDataLayer):
         await self.safely_send_steps([step])
 
     @queue_until_user_message()
-    async def update_step(self, step_dict: "StepDict"):
+    async def update_step(self, step_dict: StepDict):
         await self.create_step(step_dict)
 
     @queue_until_user_message()
@@ -413,8 +413,8 @@ class LiteralDataLayer(BaseDataLayer):
         await self.client.api.delete_thread(id=thread_id)
 
     async def list_threads(
-        self, pagination: "Pagination", filters: "ThreadFilter"
-    ) -> "PaginatedResponse[ThreadDict]":
+        self, pagination: Pagination, filters: ThreadFilter
+    ) -> PaginatedResponse[ThreadDict]:
         if not filters.userId:
             raise ValueError("userId is required")
 
@@ -466,13 +466,13 @@ class LiteralDataLayer(BaseDataLayer):
             data=chainlit_threads,
         )
 
-    async def get_thread(self, thread_id: str) -> Optional[ThreadDict]:
+    async def get_thread(self, thread_id: str) -> ThreadDict | None:
         thread = await self.client.api.get_thread(id=thread_id)
         if not thread:
             return None
 
-        elements: List[ElementDict] = []
-        steps: List[StepDict] = []
+        elements: list[ElementDict] = []
+        steps: list[StepDict] = []
         if thread.steps:
             for step in thread.steps:
                 for attachment in step.attachments:
@@ -503,10 +503,10 @@ class LiteralDataLayer(BaseDataLayer):
     async def update_thread(
         self,
         thread_id: str,
-        name: Optional[str] = None,
-        user_id: Optional[str] = None,
-        metadata: Optional[Dict] = None,
-        tags: Optional[List[str]] = None,
+        name: str | None = None,
+        user_id: str | None = None,
+        metadata: dict | None = None,
+        tags: list[str] | None = None,
     ):
         await self.client.api.upsert_thread(
             id=thread_id,
@@ -516,7 +516,7 @@ class LiteralDataLayer(BaseDataLayer):
             tags=tags,
         )
 
-    async def get_favorite_steps(self, user_id: str) -> List[StepDict]:
+    async def get_favorite_steps(self, user_id: str) -> list[StepDict]:
         """noop for literalai"""
         return []
 

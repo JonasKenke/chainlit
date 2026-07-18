@@ -3,7 +3,7 @@ import json
 import time
 import uuid
 from abc import ABC
-from typing import Dict, List, Optional, Union, cast
+from typing import cast
 
 from literalai.observability.step import MessageStepType
 
@@ -35,16 +35,16 @@ class MessageBase(ABC):
     content: str = ""
     type: MessageStepType = "assistant_message"
     streaming = False
-    created_at: Union[str, None] = None
+    created_at: str | None = None
     fail_on_persist_error: bool = False
     persisted = False
     is_error = False
-    command: Optional[str] = None
-    modes: Optional[Dict[str, str]] = None
-    parent_id: Optional[str] = None
-    language: Optional[str] = None
-    metadata: Optional[Dict] = None
-    tags: Optional[List[str]] = None
+    command: str | None = None
+    modes: dict[str, str] | None = None
+    parent_id: str | None = None
+    language: str | None = None
+    metadata: dict | None = None
+    tags: list[str] | None = None
     wait_for_answer = False
 
     def __post_init__(self) -> None:
@@ -204,28 +204,28 @@ class Message(MessageBase):
     Send a message to the UI
 
     Args:
-        content (Union[str, Dict]): The content of the message.
+        content (str, Dict): The content of the message.
         author (str, optional): The author of the message, this will be used in the UI. Defaults to the assistant name (see config).
         language (str, optional): Language of the code is the content is code. See https://react-code-blocks-rajinwonderland.vercel.app/?path=/story/codeblock--supported-languages for a list of supported languages.
-        actions (List[Action], optional): A list of actions to send with the message.
-        elements (List[ElementBased], optional): A list of elements to send with the message.
+        actions (list[Action], optional): A list of actions to send with the message.
+        elements (list[ElementBased], optional): A list of elements to send with the message.
     """
 
     def __init__(
         self,
-        content: Union[str, Dict],
-        author: Optional[str] = None,
-        language: Optional[str] = None,
-        actions: Optional[List[Action]] = None,
-        elements: Optional[List[ElementBased]] = None,
+        content: str | dict,
+        author: str | None = None,
+        language: str | None = None,
+        actions: list[Action] | None = None,
+        elements: list[ElementBased] | None = None,
         type: MessageStepType = "assistant_message",
-        metadata: Optional[Dict] = None,
-        tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        parent_id: Optional[str] = None,
-        command: Optional[str] = None,
-        modes: Optional[Dict[str, str]] = None,
-        created_at: Union[str, None] = None,
+        metadata: dict | None = None,
+        tags: list[str] | None = None,
+        id: str | None = None,
+        parent_id: str | None = None,
+        command: str | None = None,
+        modes: dict[str, str] | None = None,
+        created_at: str | None = None,
     ):
         time.sleep(0.001)
         self.language = language
@@ -376,7 +376,7 @@ class AskUserMessage(AskMessageBase):
 
         super().__post_init__()
 
-    async def send(self) -> Union[StepDict, None]:
+    async def send(self) -> StepDict | None:
         """
         Sends the question to ask to the UI and waits for the reply.
         """
@@ -396,7 +396,7 @@ class AskUserMessage(AskMessageBase):
         spec = AskSpec(type="text", step_id=step_dict["id"], timeout=self.timeout)
 
         res = cast(
-            Union[None, StepDict],
+            StepDict | None,
             await context.emitter.send_ask_user(step_dict, spec, self.raise_on_timeout),
         )
 
@@ -413,7 +413,7 @@ class AskFileMessage(AskMessageBase):
 
     Args:
         content (str): Text displayed above the upload button.
-        accept (Union[List[str], Dict[str, List[str]]]): List of mime type to accept like ["text/csv", "application/pdf"] or a dict like {"text/plain": [".txt", ".py"]}.
+        accept (list[str], dict[str, list[str]]): List of mime type to accept like ["text/csv", "application/pdf"] or a dict like {"text/plain": [".txt", ".py"]}.
         max_size_mb (int, optional): Maximum size per file in MB. Maximum value is 100.
         max_files (int, optional): Maximum number of files to upload. Maximum value is 10.
         author (str, optional): The author of the message, this will be used in the UI. Defaults to the assistant name (see config).
@@ -424,7 +424,7 @@ class AskFileMessage(AskMessageBase):
     def __init__(
         self,
         content: str,
-        accept: Union[List[str], Dict[str, List[str]]],
+        accept: list[str] | dict[str, list[str]],
         max_size_mb=2,
         max_files=1,
         author=config.ui.name,
@@ -443,7 +443,7 @@ class AskFileMessage(AskMessageBase):
 
         super().__post_init__()
 
-    async def send(self) -> Union[List[AskFileResponse], None]:
+    async def send(self) -> list[AskFileResponse] | None:
         """
         Sends the message to request a file from the user to the UI and waits for the reply.
         """
@@ -470,7 +470,7 @@ class AskFileMessage(AskMessageBase):
         )
 
         res = cast(
-            Union[None, List[FileDict]],
+            list[FileDict] | None,
             await context.emitter.send_ask_user(step_dict, spec, self.raise_on_timeout),
         )
 
@@ -500,7 +500,7 @@ class AskActionMessage(AskMessageBase):
     def __init__(
         self,
         content: str,
-        actions: List[Action],
+        actions: list[Action],
         author=config.ui.name,
         timeout=90,
         raise_on_timeout=False,
@@ -513,7 +513,7 @@ class AskActionMessage(AskMessageBase):
 
         super().__post_init__()
 
-    async def send(self) -> Union[AskActionResponse, None]:
+    async def send(self) -> AskActionResponse | None:
         """
         Sends the question to ask to the UI and waits for the reply
         """
@@ -544,7 +544,7 @@ class AskActionMessage(AskMessageBase):
         )
 
         res = cast(
-            Union[AskActionResponse, None],
+            AskActionResponse | None,
             await context.emitter.send_ask_user(step_dict, spec, self.raise_on_timeout),
         )
 
@@ -581,7 +581,7 @@ class AskElementMessage(AskMessageBase):
 
         super().__post_init__()
 
-    async def send(self) -> Union[AskElementResponse, None]:
+    async def send(self) -> AskElementResponse | None:
         """Send the custom element to the UI and wait for the reply."""
         if not self.created_at:
             self.created_at = utc_now()
@@ -606,7 +606,7 @@ class AskElementMessage(AskMessageBase):
         )
 
         res = cast(
-            Union[AskElementResponse, None],
+            AskElementResponse | None,
             await context.emitter.send_ask_user(step_dict, spec, self.raise_on_timeout),
         )
 

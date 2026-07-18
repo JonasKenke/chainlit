@@ -1,5 +1,4 @@
 import asyncio
-from typing import Union
 
 from literalai import ChatGeneration, CompletionGeneration
 
@@ -16,9 +15,7 @@ def instrument_openai():
 
     from literalai.instrumentation.openai import instrument_openai
 
-    def on_new_generation(
-        generation: Union["ChatGeneration", "CompletionGeneration"], timing
-    ):
+    def on_new_generation(generation: "ChatGeneration | CompletionGeneration", timing):
         previous_steps = local_steps.get()
 
         parent_id = previous_steps[-1].id if previous_steps else None

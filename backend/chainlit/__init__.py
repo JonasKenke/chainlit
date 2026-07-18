@@ -13,7 +13,7 @@ if env_found:
     logger.info(f"Loaded {env_file} file")
 
 import asyncio
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 from literalai import ChatGeneration, CompletionGeneration, GenerationMessage
 from pydantic.dataclasses import dataclass
@@ -118,7 +118,7 @@ def sleep(duration: int):
 @dataclass()
 class CopilotFunction:
     name: str
-    args: Dict[str, Any]
+    args: dict[str, Any]
 
     def acall(self):
         return context.emitter.send_call_fn(self.name, self.args)

@@ -1,5 +1,5 @@
 import time
-from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union
+from typing import Any, Optional, TypedDict
 from uuid import UUID
 
 import pydantic
@@ -21,11 +21,11 @@ DEFAULT_ANSWER_PREFIX_TOKENS = ["Final", "Answer", ":"]
 
 class FinalStreamHelper:
     # The stream we can use to stream the final answer from a chain
-    final_stream: Union[Message, None]
+    final_stream: Message | None
     # Should we stream the final answer?
     stream_final_answer: bool = False
     # Token sequence that prefixes the answer
-    answer_prefix_tokens: List[str]
+    answer_prefix_tokens: list[str]
     # Ignore white spaces and new lines when comparing answer_prefix_tokens to last tokens? (to determine if answer has been reached)
     strip_tokens: bool
 
@@ -33,7 +33,7 @@ class FinalStreamHelper:
 
     def __init__(
         self,
-        answer_prefix_tokens: Optional[List[str]] = None,
+        answer_prefix_tokens: list[str] | None = None,
         stream_final_answer: bool = False,
         force_stream_final_answer: bool = False,
         strip_tokens: bool = True,
@@ -66,7 +66,7 @@ class FinalStreamHelper:
         else:
             return self._compare_last_tokens(self.last_tokens)
 
-    def _compare_last_tokens(self, last_tokens: List[str]):
+    def _compare_last_tokens(self, last_tokens: list[str]):
         if last_tokens == self.answer_prefix_tokens_stripped:
             # If tokens match perfectly we are done
             return True
@@ -92,23 +92,23 @@ class FinalStreamHelper:
 
 
 class ChatGenerationStart(TypedDict):
-    input_messages: List[BaseMessage]
+    input_messages: list[BaseMessage]
     start: float
     token_count: int
-    tt_first_token: Optional[float]
+    tt_first_token: float | None
 
 
 class CompletionGenerationStart(TypedDict):
     prompt: str
     start: float
     token_count: int
-    tt_first_token: Optional[float]
+    tt_first_token: float | None
 
 
 class GenerationHelper:
-    chat_generations: Dict[str, ChatGenerationStart]
-    completion_generations: Dict[str, CompletionGenerationStart]
-    generation_inputs: Dict[str, Dict]
+    chat_generations: dict[str, ChatGenerationStart]
+    completion_generations: dict[str, CompletionGenerationStart]
+    generation_inputs: dict[str, dict]
 
     def __init__(self) -> None:
         self.chat_generations = {}
@@ -155,7 +155,7 @@ class GenerationHelper:
 
     def _convert_message_dict(
         self,
-        message: Dict,
+        message: dict,
     ):
         class_name = message["id"][-1]
         kwargs = message.get("kwargs", {})
@@ -200,7 +200,7 @@ class GenerationHelper:
 
     def _convert_message(
         self,
-        message: Union[Dict, BaseMessage],
+        message: dict | BaseMessage,
     ):
         if isinstance(message, dict):
             return self._convert_message_dict(
@@ -255,8 +255,8 @@ class GenerationHelper:
 
     def _build_llm_settings(
         self,
-        serialized: Dict,
-        invocation_params: Optional[Dict] = None,
+        serialized: dict,
+        invocation_params: dict | None = None,
     ):
         # invocation_params = run.extra.get("invocation_params")
         if invocation_params is None:
@@ -295,7 +295,7 @@ class GenerationHelper:
         return provider, model, tools, settings
 
 
-def process_content(content: Any) -> Tuple[Dict | str, Optional[str]]:
+def process_content(content: Any) -> tuple[dict | str, str | None]:
     if content is None:
         return {}, None
     if isinstance(content, str):
@@ -315,22 +315,22 @@ DEFAULT_TO_KEEP = ["retriever", "llm", "agent", "chain", "tool"]
 
 
 class LangchainTracer(AsyncBaseTracer, GenerationHelper, FinalStreamHelper):
-    steps: Dict[str, Step]
-    parent_id_map: Dict[str, str]
+    steps: dict[str, Step]
+    parent_id_map: dict[str, str]
     ignored_runs: set
 
     def __init__(
         self,
         # Token sequence that prefixes the answer
-        answer_prefix_tokens: Optional[List[str]] = None,
+        answer_prefix_tokens: list[str] | None = None,
         # Should we stream the final answer?
         stream_final_answer: bool = False,
         # Should force stream the first response?
         force_stream_final_answer: bool = False,
         # Runs to ignore to enhance readability
-        to_ignore: Optional[List[str]] = None,
+        to_ignore: list[str] | None = None,
         # Runs to keep within ignored runs
-        to_keep: Optional[List[str]] = None,
+        to_keep: list[str] | None = None,
         **kwargs: Any,
     ) -> None:
         AsyncBaseTracer.__init__(self, **kwargs)
@@ -363,14 +363,14 @@ class LangchainTracer(AsyncBaseTracer, GenerationHelper, FinalStreamHelper):
 
     async def on_chat_model_start(
         self,
-        serialized: Dict[str, Any],
-        messages: List[List[BaseMessage]],
+        serialized: dict[str, Any],
+        messages: list[list[BaseMessage]],
         *,
         run_id: "UUID",
         parent_run_id: Optional["UUID"] = None,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        name: Optional[str] = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        name: str | None = None,
         **kwargs: Any,
     ) -> Run:
         lc_messages = messages[0]
@@ -394,13 +394,13 @@ class LangchainTracer(AsyncBaseTracer, GenerationHelper, FinalStreamHelper):
 
     async def on_llm_start(
         self,
-        serialized: Dict[str, Any],
-        prompts: List[str],
+        serialized: dict[str, Any],
+        prompts: list[str],
         *,
         run_id: "UUID",
-        parent_run_id: Optional[UUID] = None,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        parent_run_id: UUID | None = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> None:
         await super().on_llm_start(
@@ -426,7 +426,7 @@ class LangchainTracer(AsyncBaseTracer, GenerationHelper, FinalStreamHelper):
         self,
         token: str,
         *,
-        chunk: Optional[Union[GenerationChunk, ChatGenerationChunk]] = None,
+        chunk: GenerationChunk | ChatGenerationChunk | None = None,
         run_id: "UUID",
         parent_run_id: Optional["UUID"] = None,
         **kwargs: Any,
@@ -480,7 +480,7 @@ class LangchainTracer(AsyncBaseTracer, GenerationHelper, FinalStreamHelper):
 
         return parent_id
 
-    def _get_non_ignored_parent_id(self, current_parent_id: Optional[str] = None):
+    def _get_non_ignored_parent_id(self, current_parent_id: str | None = None):
         if not current_parent_id:
             return self.root_parent_id
 

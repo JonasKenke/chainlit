@@ -10,7 +10,7 @@ import urllib.parse
 import webbrowser
 from contextlib import AsyncExitStack, asynccontextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Union, cast
+from typing import TYPE_CHECKING, Annotated, cast
 
 import socketio
 from fastapi import (
@@ -31,7 +31,6 @@ from fastapi.security import OAuth2PasswordRequestForm
 from starlette.datastructures import URL
 from starlette.middleware.cors import CORSMiddleware
 from starlette.types import Receive, Scope, Send
-from typing_extensions import Annotated
 from watchfiles import awatch
 
 from chainlit.auth import create_jwt, decode_jwt, get_configuration, get_current_user
@@ -503,7 +502,7 @@ def _get_oauth_redirect_error(request: Request, error: str) -> Response:
 
 
 async def _authenticate_user(
-    request: Request, user: Optional[User], redirect_to_callback: bool = False
+    request: Request, user: User | None, redirect_to_callback: bool = False
 ) -> Response:
     """Authenticate a user and return the response."""
 
@@ -568,7 +567,7 @@ async def jwt_auth(request: Request):
     """Login a user using a valid jwt."""
     from jwt import InvalidTokenError
 
-    auth_header: Optional[str] = request.headers.get("Authorization")
+    auth_header: str | None = request.headers.get("Authorization")
     if not auth_header:
         raise HTTPException(status_code=401, detail="Authorization header missing")
 
@@ -645,9 +644,9 @@ async def oauth_login(provider_id: str, request: Request):
 async def oauth_callback(
     provider_id: str,
     request: Request,
-    error: Optional[str] = None,
-    code: Optional[str] = None,
-    state: Optional[str] = None,
+    error: str | None = None,
+    code: str | None = None,
+    state: str | None = None,
 ):
     """Handle the oauth callback and login the user."""
 
@@ -703,9 +702,9 @@ async def oauth_callback(
 @router.post("/auth/oauth/azure-ad-hybrid/callback")
 async def oauth_azure_hf_callback(
     request: Request,
-    error: Optional[str] = None,
-    code: Annotated[Optional[str], Form()] = None,
-    id_token: Annotated[Optional[str], Form()] = None,
+    error: str | None = None,
+    code: Annotated[str | None, Form()] = None,
+    id_token: Annotated[str | None, Form()] = None,
 ):
     """Handle the azure ad hybrid flow callback and login the user."""
 
@@ -748,7 +747,7 @@ async def oauth_azure_hf_callback(
     return response
 
 
-GenericUser = Union[User, PersistedUser, None]
+GenericUser = User | PersistedUser | None
 UserParam = Annotated[GenericUser, Depends(get_current_user)]
 
 
@@ -808,7 +807,7 @@ async def project_settings(
     language: str = Query(
         default="en-US", description="Language code", pattern=_language_pattern
     ),
-    chat_profile: Optional[str] = Query(
+    chat_profile: str | None = Query(
         default=None, description="Current chat profile name"
     ),
 ):
@@ -1591,7 +1590,7 @@ async def upload_file(
     current_user: UserParam,
     session_id: str,
     file: UploadFile,
-    ask_parent_id: Optional[str] = None,
+    ask_parent_id: str | None = None,
 ):
     """Upload a file to the session files directory."""
 
@@ -1641,7 +1640,7 @@ async def upload_file(
         await file.close()
 
 
-def validate_file_upload(file: UploadFile, spec: Optional[AskFileSpec] = None):
+def validate_file_upload(file: UploadFile, spec: AskFileSpec | None = None):
     """Validate the file upload as configured in config.features.spontaneous_file_upload or by AskFileSpec
     for a specific message.
 
@@ -1662,7 +1661,7 @@ def validate_file_upload(file: UploadFile, spec: Optional[AskFileSpec] = None):
     validate_file_size(file, spec)
 
 
-def validate_file_mime_type(file: UploadFile, spec: Optional[AskFileSpec]):
+def validate_file_mime_type(file: UploadFile, spec: AskFileSpec | None):
     """Validate the file mime type as configured in config.features.spontaneous_file_upload.
     Args:
         file (UploadFile): The file to validate.
@@ -1679,11 +1678,11 @@ def validate_file_mime_type(file: UploadFile, spec: Optional[AskFileSpec]):
 
     accept = config.features.spontaneous_file_upload.accept if not spec else spec.accept
 
-    assert isinstance(accept, List) or isinstance(accept, dict), (
+    assert isinstance(accept, list) or isinstance(accept, dict), (
         "Invalid configuration for spontaneous_file_upload, accept must be a list or a dict"
     )
 
-    if isinstance(accept, List):
+    if isinstance(accept, list):
         for pattern in accept:
             if fnmatch.fnmatch(str(file.content_type), pattern):
                 return
@@ -1700,7 +1699,7 @@ def validate_file_mime_type(file: UploadFile, spec: Optional[AskFileSpec]):
     raise ValueError("File type not allowed")
 
 
-def validate_file_size(file: UploadFile, spec: Optional[AskFileSpec]):
+def validate_file_size(file: UploadFile, spec: AskFileSpec | None):
     """Validate the file size as configured in config.features.spontaneous_file_upload.
     Args:
         file (UploadFile): The file to validate.
@@ -1770,7 +1769,7 @@ async def get_favicon():
 
 
 @router.get("/logo")
-async def get_logo(theme: Optional[Theme] = Query(Theme.light)):
+async def get_logo(theme: Theme | None = Query(Theme.light)):
     """Get the default logo for the UI."""
     theme_value = theme.value if theme else Theme.light.value
     logo_path = None

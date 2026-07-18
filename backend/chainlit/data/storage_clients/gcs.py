@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 from google.auth import default
 from google.cloud import storage  # type: ignore
@@ -13,9 +13,9 @@ class GCSStorageClient(BaseStorageClient):
     def __init__(
         self,
         bucket_name: str,
-        project_id: Optional[str] = None,
-        client_email: Optional[str] = None,
-        private_key: Optional[str] = None,
+        project_id: str | None = None,
+        client_email: str | None = None,
+        private_key: str | None = None,
     ):
         if client_email and private_key and project_id:
             # Go to IAM & Admin, click on Service Accounts, and generate a new JSON key
@@ -51,10 +51,10 @@ class GCSStorageClient(BaseStorageClient):
     def sync_upload_file(
         self,
         object_key: str,
-        data: Union[bytes, str],
+        data: bytes | str,
         mime: str = "application/octet-stream",
         overwrite: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         try:
             blob = self.bucket.blob(object_key)
 
@@ -80,11 +80,11 @@ class GCSStorageClient(BaseStorageClient):
     async def upload_file(
         self,
         object_key: str,
-        data: Union[bytes, str],
+        data: bytes | str,
         mime: str = "application/octet-stream",
         overwrite: bool = True,
         content_disposition: str | None = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return await make_async(self.sync_upload_file)(
             object_key, data, mime, overwrite
         )

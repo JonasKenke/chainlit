@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from literalai import ChatGeneration, CompletionGeneration, GenerationMessage
 from llama_index.core.callbacks import TokenCountingHandler
@@ -23,12 +23,12 @@ DEFAULT_IGNORE = [
 class LlamaIndexCallbackHandler(TokenCountingHandler):
     """Base callback handler that can be used to track event starts and ends."""
 
-    steps: Dict[str, Step]
+    steps: dict[str, Step]
 
     def __init__(
         self,
-        event_starts_to_ignore: List[CBEventType] = DEFAULT_IGNORE,
-        event_ends_to_ignore: List[CBEventType] = DEFAULT_IGNORE,
+        event_starts_to_ignore: list[CBEventType] = DEFAULT_IGNORE,
+        event_ends_to_ignore: list[CBEventType] = DEFAULT_IGNORE,
     ) -> None:
         """Initialize the base callback handler."""
         super().__init__(
@@ -38,7 +38,7 @@ class LlamaIndexCallbackHandler(TokenCountingHandler):
 
         self.steps = {}
 
-    def _get_parent_id(self, event_parent_id: Optional[str] = None) -> Optional[str]:
+    def _get_parent_id(self, event_parent_id: str | None = None) -> str | None:
         if event_parent_id and event_parent_id in self.steps:
             return event_parent_id
         elif context_var.get().current_step:
@@ -49,7 +49,7 @@ class LlamaIndexCallbackHandler(TokenCountingHandler):
     def on_event_start(
         self,
         event_type: CBEventType,
-        payload: Optional[Dict[str, Any]] = None,
+        payload: dict[str, Any] | None = None,
         event_id: str = "",
         parent_id: str = "",
         **kwargs: Any,
@@ -57,11 +57,11 @@ class LlamaIndexCallbackHandler(TokenCountingHandler):
         """Run when an event starts and return id of event."""
         step_type: StepType = "undefined"
         step_name: str = event_type.value
-        step_input: Optional[Dict[str, Any]] = payload
+        step_input: dict[str, Any] | None = payload
         if event_type == CBEventType.FUNCTION_CALL:
             step_type = "tool"
             if payload:
-                metadata: Optional[ToolMetadata] = payload.get(EventPayload.TOOL)
+                metadata: ToolMetadata | None = payload.get(EventPayload.TOOL)
                 if metadata:
                     step_name = getattr(metadata, "name", step_name)
                 step_input = payload.get(EventPayload.FUNCTION_CALL)
@@ -90,7 +90,7 @@ class LlamaIndexCallbackHandler(TokenCountingHandler):
     def on_event_end(
         self,
         event_type: CBEventType,
-        payload: Optional[Dict[str, Any]] = None,
+        payload: dict[str, Any] | None = None,
         event_id: str = "",
         **kwargs: Any,
     ) -> None:
@@ -144,7 +144,7 @@ class LlamaIndexCallbackHandler(TokenCountingHandler):
             context_var.get().loop.create_task(step.update())
 
         elif event_type == CBEventType.LLM:
-            formatted_messages = payload.get(EventPayload.MESSAGES)  # type: Optional[List[ChatMessage]]
+            formatted_messages = payload.get(EventPayload.MESSAGES)  # type: list[ChatMessage] | None
             formatted_prompt = payload.get(EventPayload.PROMPT)
             response = payload.get(EventPayload.RESPONSE)
 

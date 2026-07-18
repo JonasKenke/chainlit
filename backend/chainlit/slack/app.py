@@ -3,7 +3,6 @@ import os
 import re
 import uuid
 from functools import partial
-from typing import Dict, List, Optional, Union
 
 import httpx
 from slack_bolt.adapter.fastapi.async_handler import AsyncSlackRequestHandler
@@ -30,7 +29,7 @@ class SlackEmitter(BaseChainlitEmitter):
         app: AsyncApp,
         channel_id: str,
         say,
-        thread_ts: Optional[str] = None,
+        thread_ts: str | None = None,
     ):
         super().__init__(session)
         self.app = app
@@ -43,7 +42,7 @@ class SlackEmitter(BaseChainlitEmitter):
             return
 
         persisted_file = self.session.files.get(element_dict.get("chainlitKey") or "")
-        file: Optional[Union[bytes, str]] = None
+        file: bytes | str | None = None
 
         if persisted_file:
             file = str(persisted_file["path"])
@@ -72,7 +71,7 @@ class SlackEmitter(BaseChainlitEmitter):
             return
 
         enable_feedback = get_data_layer()
-        blocks: List[Dict] = [
+        blocks: list[dict] = [
             {
                 "type": "section",
                 "text": {"type": "mrkdwn", "text": step_dict["output"]},
@@ -142,7 +141,7 @@ def init_slack_context(
     slack_channel_id: str,
     event,
     say,
-    thread_ts: Optional[str] = None,
+    thread_ts: str | None = None,
 ) -> ChainlitContext:
     emitter = SlackEmitter(
         session=session,
@@ -165,15 +164,15 @@ def init_slack_context(
 
 slack_app_handler = AsyncSlackRequestHandler(slack_app)
 
-users_by_slack_id: Dict[str, Union[User, PersistedUser]] = {}
+users_by_slack_id: dict[str, User | PersistedUser] = {}
 
 USER_PREFIX = "slack_"
 
 
-bot_user_id: Optional[str] = None
+bot_user_id: str | None = None
 
 
-async def get_bot_user_id() -> Optional[str]:
+async def get_bot_user_id() -> str | None:
     """Get and cache the bot's user ID."""
     global bot_user_id
     if bot_user_id:
@@ -234,7 +233,7 @@ async def get_user(slack_user_id: str, is_bot: bool = False):
 
 
 async def fetch_message_history(
-    channel_id: str, thread_ts: Optional[str] = None, limit=30
+    channel_id: str, thread_ts: str | None = None, limit=30
 ):
     if not thread_ts:
         result = await slack_app.client.conversations_history(
@@ -311,9 +310,9 @@ async def process_slack_message(
     event,
     say,
     thread_id: str,
-    thread_name: Optional[str] = None,
+    thread_name: str | None = None,
     bind_thread_to_user=False,
-    thread_ts: Optional[str] = None,
+    thread_ts: str | None = None,
 ):
     await add_reaction_if_enabled(event)
 

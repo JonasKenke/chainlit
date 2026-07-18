@@ -1,8 +1,9 @@
-from typing import Callable, Dict, Generic, Optional, TypeVar
+from collections.abc import Callable
+from typing import Generic, TypeVar
 
 from chainlit.context import context
 
-user_sessions: Dict[str, Dict] = {}
+user_sessions: dict[str, dict] = {}
 
 T = TypeVar("T")
 
@@ -44,7 +45,7 @@ class UserSession:
         user_session[key] = value
 
     def create_accessor(
-        self, key: str, default: T, *, apply_fn: Optional[Callable[[T], T]] = None
+        self, key: str, default: T, *, apply_fn: Callable[[T], T] | None = None
     ) -> "SessionAccessor[T]":
         """
         Create a typed session accessor object for the given key and default value.
@@ -116,7 +117,7 @@ class SessionAccessor(Generic[T]):
     """
 
     def __init__(
-        self, key: str, default: T, *, apply_fn: Optional[Callable[[T], T]] = None
+        self, key: str, default: T, *, apply_fn: Callable[[T], T] | None = None
     ):
         self._key = key
         self._default = default

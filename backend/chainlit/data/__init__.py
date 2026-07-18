@@ -1,13 +1,12 @@
 import os
 import warnings
-from typing import Optional
 
 from .base import BaseDataLayer
 from .utils import (
     queue_until_user_message as queue_until_user_message,  # TODO: Consider deprecating re-export.; Redundant alias tells type checkers to STFU.
 )
 
-_data_layer: Optional[BaseDataLayer] = None
+_data_layer: BaseDataLayer | None = None
 _data_layer_initialized = False
 
 

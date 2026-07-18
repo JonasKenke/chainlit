@@ -1,5 +1,6 @@
 import inspect
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Union, overload
+from collections.abc import Awaitable, Callable
+from typing import Any, Optional, overload
 
 from fastapi import Request, Response
 from mcp import ClientSession
@@ -18,7 +19,7 @@ from chainlit.user import User
 from chainlit.utils import wrap_user_function
 
 
-def on_app_startup(func: Callable[[], Union[None, Awaitable[None]]]) -> Callable:
+def on_app_startup(func: Callable[[], None | Awaitable[None]]) -> Callable:
     """
     Hook to run code when the Chainlit application starts.
     Useful for initializing resources, loading models, setting up database connections, etc.
@@ -40,7 +41,7 @@ def on_app_startup(func: Callable[[], Union[None, Awaitable[None]]]) -> Callable
     return func
 
 
-def on_app_shutdown(func: Callable[[], Union[None, Awaitable[None]]]) -> Callable:
+def on_app_shutdown(func: Callable[[], None | Awaitable[None]]) -> Callable:
     """
     Hook to run code when the Chainlit application shuts down.
     Useful for cleaning up resources, closing connections, saving state, etc.
@@ -63,7 +64,7 @@ def on_app_shutdown(func: Callable[[], Union[None, Awaitable[None]]]) -> Callabl
 
 
 def password_auth_callback(
-    func: Callable[[str, str], Awaitable[Optional[User]]],
+    func: Callable[[str, str], Awaitable[User | None]],
 ) -> Callable:
     """
     Framework agnostic decorator to authenticate the user.
@@ -84,7 +85,7 @@ def password_auth_callback(
 
 
 def header_auth_callback(
-    func: Callable[[Headers], Awaitable[Optional[User]]],
+    func: Callable[[Headers], Awaitable[User | None]],
 ) -> Callable:
     """
     Framework agnostic decorator to authenticate the user via a header
@@ -106,7 +107,7 @@ def header_auth_callback(
 
 def oauth_callback(
     func: Callable[
-        [str, str, Dict[str, str], User, Optional[str]], Awaitable[Optional[User]]
+        [str, str, dict[str, str], User, str | None], Awaitable[User | None]
     ],
 ) -> Callable:
     """
@@ -225,14 +226,14 @@ def on_chat_resume(func: Callable[[ThreadDict], Any]) -> Callable:
 
 @overload
 def set_chat_profiles(
-    func: Callable[[Optional["User"]], Awaitable[List["ChatProfile"]]],
-) -> Callable[[Optional["User"]], Awaitable[List["ChatProfile"]]]: ...
+    func: Callable[[Optional["User"]], Awaitable[list["ChatProfile"]]],
+) -> Callable[[Optional["User"]], Awaitable[list["ChatProfile"]]]: ...
 
 
 @overload
 def set_chat_profiles(
-    func: Callable[[Optional["User"], Optional["str"]], Awaitable[List["ChatProfile"]]],
-) -> Callable[[Optional["User"], Optional["str"]], Awaitable[List["ChatProfile"]]]: ...
+    func: Callable[[Optional["User"], str | None], Awaitable[list["ChatProfile"]]],
+) -> Callable[[Optional["User"], str | None], Awaitable[list["ChatProfile"]]]: ...
 
 
 def set_chat_profiles(func):
@@ -252,14 +253,14 @@ def set_chat_profiles(func):
 
 @overload
 def set_starters(
-    func: Callable[[Optional["User"]], Awaitable[List["Starter"]]],
-) -> Callable[[Optional["User"]], Awaitable[List["Starter"]]]: ...
+    func: Callable[[Optional["User"]], Awaitable[list["Starter"]]],
+) -> Callable[[Optional["User"]], Awaitable[list["Starter"]]]: ...
 
 
 @overload
 def set_starters(
-    func: Callable[[Optional["User"], Optional["str"]], Awaitable[List["Starter"]]],
-) -> Callable[[Optional["User"], Optional["str"]], Awaitable[List["Starter"]]]: ...
+    func: Callable[[Optional["User"], str | None], Awaitable[list["Starter"]]],
+) -> Callable[[Optional["User"], str | None], Awaitable[list["Starter"]]]: ...
 
 
 def set_starters(func):
@@ -279,29 +280,25 @@ def set_starters(func):
 
 @overload
 def set_starter_categories(
-    func: Callable[[Optional["User"]], Awaitable[List["StarterCategory"]]],
-) -> Callable[[Optional["User"]], Awaitable[List["StarterCategory"]]]: ...
+    func: Callable[[Optional["User"]], Awaitable[list["StarterCategory"]]],
+) -> Callable[[Optional["User"]], Awaitable[list["StarterCategory"]]]: ...
+
+
+@overload
+def set_starter_categories(
+    func: Callable[[Optional["User"], str | None], Awaitable[list["StarterCategory"]]],
+) -> Callable[[Optional["User"], str | None], Awaitable[list["StarterCategory"]]]: ...
 
 
 @overload
 def set_starter_categories(
     func: Callable[
-        [Optional["User"], Optional["str"]], Awaitable[List["StarterCategory"]]
+        [Optional["User"], str | None, str | None],
+        Awaitable[list["StarterCategory"]],
     ],
 ) -> Callable[
-    [Optional["User"], Optional["str"]], Awaitable[List["StarterCategory"]]
-]: ...
-
-
-@overload
-def set_starter_categories(
-    func: Callable[
-        [Optional["User"], Optional["str"], Optional["str"]],
-        Awaitable[List["StarterCategory"]],
-    ],
-) -> Callable[
-    [Optional["User"], Optional["str"], Optional["str"]],
-    Awaitable[List["StarterCategory"]],
+    [Optional["User"], str | None, str | None],
+    Awaitable[list["StarterCategory"]],
 ]: ...
 
 
@@ -445,8 +442,8 @@ def action_callback(name: str) -> Callable:
 
 
 def on_settings_update(
-    func: Callable[[Dict[str, Any]], Any],
-) -> Callable[[Dict[str, Any]], Any]:
+    func: Callable[[dict[str, Any]], Any],
+) -> Callable[[dict[str, Any]], Any]:
     """
     Hook to react to the user changing any settings.
 
@@ -462,8 +459,8 @@ def on_settings_update(
 
 
 def on_settings_edit(
-    func: Callable[[Dict[str, Any]], Any],
-) -> Callable[[Dict[str, Any]], Any]:
+    func: Callable[[dict[str, Any]], Any],
+) -> Callable[[dict[str, Any]], Any]:
     """
     Hook to react to the user editing any settings (on the fly).
 
@@ -513,7 +510,7 @@ def on_feedback(func: Callable) -> Callable:
     return func
 
 
-def on_slack_reaction_added(func: Callable[[Dict[str, Any]], Any]) -> Callable:
+def on_slack_reaction_added(func: Callable[[dict[str, Any]], Any]) -> Callable:
     """
     Hook to react to Slack reaction_added events.
     The decorated function is called every time a user adds a reaction to a message in Slack.
@@ -541,8 +538,8 @@ def on_slack_reaction_added(func: Callable[[Dict[str, Any]], Any]) -> Callable:
 
 
 def on_shared_thread_view(
-    func: Callable[[ThreadDict, Optional[User]], Awaitable[bool]],
-) -> Callable[[ThreadDict, Optional[User]], Awaitable[bool]]:
+    func: Callable[[ThreadDict, User | None], Awaitable[bool]],
+) -> Callable[[ThreadDict, User | None], Awaitable[bool]]:
     """Hook to authorize viewing a shared thread.
 
     Users must implement and return True to allow a non-author to view a thread.

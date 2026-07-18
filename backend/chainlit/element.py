@@ -1,24 +1,14 @@
+import asyncio
 import json
 import mimetypes
 import uuid
 from enum import Enum
 from io import BytesIO
-from typing import (
-    Any,
-    ClassVar,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    TypedDict,
-    TypeVar,
-    Union,
-)
+from typing import Any, ClassVar, Literal, TypedDict, TypeVar
 
 import filetype
 from pydantic import Field
 from pydantic.dataclasses import dataclass
-from syncer import asyncio
 
 from chainlit.context import context
 from chainlit.data import get_data_layer
@@ -48,22 +38,22 @@ ElementSize = Literal["small", "medium", "large"]
 
 class ElementDict(TypedDict, total=False):
     id: str
-    threadId: Optional[str]
+    threadId: str | None
     type: ElementType
-    chainlitKey: Optional[str]
-    path: Optional[str]
-    url: Optional[str]
-    objectKey: Optional[str]
+    chainlitKey: str | None
+    path: str | None
+    url: str | None
+    objectKey: str | None
     name: str
     display: ElementDisplay
-    size: Optional[ElementSize]
-    language: Optional[str]
-    page: Optional[int]
-    props: Optional[Dict]
-    autoPlay: Optional[bool]
-    playerConfig: Optional[dict]
-    forId: Optional[str]
-    mime: Optional[str]
+    size: ElementSize | None
+    language: str | None
+    page: int | None
+    props: dict | None
+    autoPlay: bool | None
+    playerConfig: dict | None
+    forId: str | None
+    mime: str | None
 
 
 @dataclass
@@ -77,25 +67,25 @@ class Element:
     # The ID of the element. This is set automatically when the element is sent to the UI.
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     # The key of the element hosted on Chainlit.
-    chainlit_key: Optional[str] = None
+    chainlit_key: str | None = None
     # The URL of the element if already hosted somewhere else.
-    url: Optional[str] = None
+    url: str | None = None
     # The S3 object key.
-    object_key: Optional[str] = None
+    object_key: str | None = None
     # The local path of the element.
-    path: Optional[str] = None
+    path: str | None = None
     # The byte content of the element.
-    content: Optional[Union[bytes, str]] = None
+    content: bytes | str | None = None
     # Controls how the image element should be displayed in the UI. Choices are “side” (default), “inline”, or “page”.
     display: ElementDisplay = Field(default="inline")
     # Controls element size
-    size: Optional[ElementSize] = None
+    size: ElementSize | None = None
     # The ID of the message this element is associated with.
-    for_id: Optional[str] = None
+    for_id: str | None = None
     # The language, if relevant
-    language: Optional[str] = None
+    language: str | None = None
     # Mime type, inferred based on content if not provided
-    mime: Optional[str] = None
+    mime: str | None = None
 
     def __post_init__(self) -> None:
         self.persisted = False
@@ -267,7 +257,7 @@ class Text(Element):
     """Useful to send a text (not a message) to the UI."""
 
     type: ClassVar[ElementType] = "text"
-    language: Optional[str] = None
+    language: str | None = None
 
 
 @dataclass
@@ -275,7 +265,7 @@ class Pdf(Element):
     """Useful to send a pdf to the UI."""
 
     mime: str = "application/pdf"
-    page: Optional[int] = None
+    page: int | None = None
     type: ClassVar[ElementType] = "pdf"
 
 
@@ -317,13 +307,13 @@ class TaskStatus(Enum):
 class Task:
     title: str
     status: TaskStatus = TaskStatus.READY
-    forId: Optional[str] = None
+    forId: str | None = None
 
     def __init__(
         self,
         title: str,
         status: TaskStatus = TaskStatus.READY,
-        forId: Optional[str] = None,
+        forId: str | None = None,
     ):
         self.title = title
         self.status = status
@@ -333,7 +323,7 @@ class Task:
 @dataclass
 class TaskList(Element):
     type: ClassVar[ElementType] = "tasklist"
-    tasks: List[Task] = Field(default_factory=list, exclude=True)
+    tasks: list[Task] = Field(default_factory=list, exclude=True)
     status: str = "Ready"
     name: str = "tasklist"
     content: str = "dummy content to pass validation"
@@ -383,7 +373,7 @@ class Video(Element):
     size: ElementSize = "medium"
     # Override settings for each type of player in ReactPlayer
     # https://github.com/cookpete/react-player?tab=readme-ov-file#config-prop
-    player_config: Optional[dict] = None
+    player_config: dict | None = None
 
 
 @dataclass
@@ -470,7 +460,7 @@ class CustomElement(Element):
 
     type: ClassVar[ElementType] = "custom"
     mime: str = "application/json"
-    props: Dict = Field(default_factory=dict)
+    props: dict = Field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.content = json.dumps(self.props)

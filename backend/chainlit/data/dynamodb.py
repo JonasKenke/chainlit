@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -6,7 +8,7 @@ import random
 from dataclasses import asdict
 from datetime import datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import aiofiles
 import aiohttp
@@ -44,8 +46,8 @@ class DynamoDBDataLayer(BaseDataLayer):
     def __init__(
         self,
         table_name: str,
-        client: Optional["DynamoDBClient"] = None,
-        storage_provider: Optional[BaseStorageClient] = None,
+        client: DynamoDBClient | None = None,
+        storage_provider: BaseStorageClient | None = None,
         user_thread_limit: int = 10,
     ):
         if client:
@@ -96,8 +98,8 @@ class DynamoDBDataLayer(BaseDataLayer):
             for key, value in item.items()
         }
 
-    def _update_item(self, key: Dict[str, Any], updates: Dict[str, Any]):
-        update_expr: List[str] = []
+    def _update_item(self, key: dict[str, Any], updates: dict[str, Any]):
+        update_expr: list[str] = []
         expression_attribute_names = {}
         expression_attribute_values = {}
 
@@ -122,7 +124,7 @@ class DynamoDBDataLayer(BaseDataLayer):
     def context(self):
         return context
 
-    async def get_user(self, identifier: str) -> Optional["PersistedUser"]:
+    async def get_user(self, identifier: str) -> PersistedUser | None:
         _logger.info("DynamoDB: get_user identifier=%s", identifier)
 
         response = self.client.get_item(
@@ -145,11 +147,11 @@ class DynamoDBDataLayer(BaseDataLayer):
             metadata=user["metadata"],
         )
 
-    async def create_user(self, user: "User") -> Optional["PersistedUser"]:
+    async def create_user(self, user: User) -> PersistedUser | None:
         _logger.info("DynamoDB: create_user user.identifier=%s", user.identifier)
 
         ts = self._get_current_timestamp()
-        metadata: Dict[Any, Any] = user.metadata  # type: ignore
+        metadata: dict[Any, Any] = user.metadata  # type: ignore
 
         item = {
             "PK": f"USER#{user.identifier}",
@@ -222,7 +224,7 @@ class DynamoDBDataLayer(BaseDataLayer):
         return feedback.id
 
     @queue_until_user_message()
-    async def create_element(self, element: "Element"):
+    async def create_element(self, element: Element):
         _logger.info(
             "DynamoDB: create_element thread=%s step=%s type=%s",
             element.thread_id,
@@ -240,7 +242,7 @@ class DynamoDBDataLayer(BaseDataLayer):
             )
             return
 
-        content: Optional[Union[bytes, str]] = None
+        content: bytes | str | None = None
 
         if element.content:
             content = element.content
@@ -285,7 +287,7 @@ class DynamoDBDataLayer(BaseDataLayer):
                 "DynamoDB Error: create_element, Failed to persist data in storage_provider",
             )
 
-        element_dict: Dict[str, Any] = element.to_dict()  # type: ignore
+        element_dict: dict[str, Any] = element.to_dict()  # type: ignore
         element_dict.update(
             {
                 "PK": f"THREAD#{element.thread_id}",
@@ -300,9 +302,7 @@ class DynamoDBDataLayer(BaseDataLayer):
             Item=self._serialize_item(element_dict),
         )
 
-    async def get_element(
-        self, thread_id: str, element_id: str
-    ) -> Optional["ElementDict"]:
+    async def get_element(self, thread_id: str, element_id: str) -> ElementDict | None:
         _logger.info(
             "DynamoDB: get_element thread=%s element=%s", thread_id, element_id
         )
@@ -321,7 +321,7 @@ class DynamoDBDataLayer(BaseDataLayer):
         return self._deserialize_item(response["Item"])  # type: ignore
 
     @queue_until_user_message()
-    async def delete_element(self, element_id: str, thread_id: Optional[str] = None):
+    async def delete_element(self, element_id: str, thread_id: str | None = None):
         thread_id = self.context.session.thread_id
         _logger.info(
             "DynamoDB: delete_element thread=%s element=%s", thread_id, element_id
@@ -336,7 +336,7 @@ class DynamoDBDataLayer(BaseDataLayer):
         )
 
     @queue_until_user_message()
-    async def create_step(self, step_dict: "StepDict"):
+    async def create_step(self, step_dict: StepDict):
         _logger.info(
             "DynamoDB: create_step thread=%s step=%s",
             step_dict.get("threadId"),
@@ -359,7 +359,7 @@ class DynamoDBDataLayer(BaseDataLayer):
         )
 
     @queue_until_user_message()
-    async def update_step(self, step_dict: "StepDict"):
+    async def update_step(self, step_dict: StepDict):
         _logger.info(
             "DynamoDB: update_step thread=%s step=%s",
             step_dict.get("threadId"),
@@ -414,7 +414,7 @@ class DynamoDBDataLayer(BaseDataLayer):
         if not thread:
             return
 
-        items: List[Any] = thread["steps"]
+        items: list[Any] = thread["steps"]
         if thread["elements"]:
             items.extend(thread["elements"])
 
@@ -453,8 +453,8 @@ class DynamoDBDataLayer(BaseDataLayer):
         )
 
     async def list_threads(
-        self, pagination: "Pagination", filters: "ThreadFilter"
-    ) -> "PaginatedResponse[ThreadDict]":
+        self, pagination: Pagination, filters: ThreadFilter
+    ) -> PaginatedResponse[ThreadDict]:
         _logger.info("DynamoDB: list_threads filters.userId=%s", filters.userId)
 
         if filters.feedback:
@@ -467,7 +467,7 @@ class DynamoDBDataLayer(BaseDataLayer):
             ),
         )
 
-        query_args: Dict[str, Any] = {
+        query_args: dict[str, Any] = {
             "TableName": self.table_name,
             "IndexName": "UserThread",
             "ScanIndexForward": False,
@@ -498,7 +498,7 @@ class DynamoDBDataLayer(BaseDataLayer):
             )
 
         for item in response["Items"]:
-            deserialized_item: Dict[str, Any] = self._deserialize_item(item)
+            deserialized_item: dict[str, Any] = self._deserialize_item(item)
             thread = ThreadDict(  # type: ignore
                 id=deserialized_item["PK"].strip("THREAD#"),
                 createdAt=deserialized_item["UserThreadSK"].strip("TS#"),
@@ -508,13 +508,13 @@ class DynamoDBDataLayer(BaseDataLayer):
 
         return paginated_response
 
-    async def get_thread(self, thread_id: str) -> "Optional[ThreadDict]":
+    async def get_thread(self, thread_id: str) -> ThreadDict | None:
         _logger.info("DynamoDB: get_thread thread=%s", thread_id)
 
         # Get all thread records
-        thread_items: List[Any] = []
+        thread_items: list[Any] = []
 
-        cursor: Dict[str, Any] = {}
+        cursor: dict[str, Any] = {}
         while True:
             response = self.client.query(
                 TableName=self.table_name,
@@ -535,7 +535,7 @@ class DynamoDBDataLayer(BaseDataLayer):
             return None
 
         # process accordingly
-        thread_dict: Optional[ThreadDict] = None
+        thread_dict: ThreadDict | None = None
         steps = []
         elements = []
 
@@ -575,10 +575,10 @@ class DynamoDBDataLayer(BaseDataLayer):
     async def update_thread(
         self,
         thread_id: str,
-        name: Optional[str] = None,
-        user_id: Optional[str] = None,
-        metadata: Optional[Dict] = None,
-        tags: Optional[List[str]] = None,
+        name: str | None = None,
+        user_id: str | None = None,
+        metadata: dict | None = None,
+        tags: list[str] | None = None,
     ):
         _logger.info("DynamoDB: update_thread thread=%s userId=%s", thread_id, user_id)
         _logger.debug(
@@ -615,11 +615,11 @@ class DynamoDBDataLayer(BaseDataLayer):
             updates=item,
         )
 
-    async def get_favorite_steps(self, user_id: str) -> List["StepDict"]:
+    async def get_favorite_steps(self, user_id: str) -> list[StepDict]:
         _logger.info("DynamoDB: get_favorite_steps user_id=%s", user_id)
 
         thread_ids = []
-        query_args: Dict[str, Any] = {
+        query_args: dict[str, Any] = {
             "TableName": self.table_name,
             "IndexName": "UserThread",
             "KeyConditionExpression": "#UserThreadPK = :pk",
@@ -638,10 +638,10 @@ class DynamoDBDataLayer(BaseDataLayer):
                 break
             query_args["ExclusiveStartKey"] = response["LastEvaluatedKey"]
 
-        favorite_steps: List[Dict[str, Any]] = []
+        favorite_steps: list[dict[str, Any]] = []
 
         for thread_id in thread_ids:
-            t_query_args: Dict[str, Any] = {
+            t_query_args: dict[str, Any] = {
                 "TableName": self.table_name,
                 "KeyConditionExpression": "#pk = :pk AND begins_with(#sk, :sk_prefix)",
                 "FilterExpression": "#metadata.#favorite = :true",
@@ -676,7 +676,7 @@ class DynamoDBDataLayer(BaseDataLayer):
                 t_query_args["ExclusiveStartKey"] = response["LastEvaluatedKey"]
 
         favorite_steps.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
-        return cast(List["StepDict"], favorite_steps)
+        return cast(list["StepDict"], favorite_steps)
 
     async def build_debug_url(self) -> str:
         return ""

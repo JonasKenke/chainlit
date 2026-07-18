@@ -1,8 +1,8 @@
 import datetime
 import os
 import pathlib
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 from unittest.mock import AsyncMock, Mock, create_autospec, mock_open
 
 import pytest

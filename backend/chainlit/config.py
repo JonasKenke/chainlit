@@ -2,19 +2,10 @@ import json
 import os
 import site
 import sys
+from collections.abc import Awaitable, Callable
 from importlib import util
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Awaitable,
-    Callable,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import tomli
 from pydantic import BaseModel, Field
@@ -44,7 +35,7 @@ if TYPE_CHECKING:
     from chainlit.user import User
 else:
     # Pydantic needs to resolve forward annotations. Because all of these are used
-    # within `typing.Callable`, alias to `Any` as Pydantic does not perform validation
+    # within `collections.abc.Callable`, alias to `Any` as Pydantic does not perform validation
     # of callable argument/return types anyway.
     Request = Response = Action = Message = ChatProfile = InputAudioChunk = Starter = StarterCategory = ThreadDict = User = Feedback = Any  # fmt: off
 
@@ -254,11 +245,11 @@ DEFAULT_ROOT_PATH = ""
 
 class RunSettings(BaseModel):
     # Name of the module (python file) used in the run command
-    module_name: Optional[str] = None
+    module_name: str | None = None
     host: str = DEFAULT_HOST
     port: int = DEFAULT_PORT
-    ssl_cert: Optional[str] = None
-    ssl_key: Optional[str] = None
+    ssl_cert: str | None = None
+    ssl_key: str | None = None
     root_path: str = DEFAULT_ROOT_PATH
     headless: bool = False
     watch: bool = False
@@ -268,28 +259,28 @@ class RunSettings(BaseModel):
 
 
 class PaletteOptions(BaseModel):
-    main: Optional[str] = ""
-    light: Optional[str] = ""
-    dark: Optional[str] = ""
+    main: str | None = ""
+    light: str | None = ""
+    dark: str | None = ""
 
 
 class TextOptions(BaseModel):
-    primary: Optional[str] = ""
-    secondary: Optional[str] = ""
+    primary: str | None = ""
+    secondary: str | None = ""
 
 
 class Palette(BaseModel):
-    primary: Optional[PaletteOptions] = None
-    background: Optional[str] = ""
-    paper: Optional[str] = ""
-    text: Optional[TextOptions] = None
+    primary: PaletteOptions | None = None
+    background: str | None = ""
+    paper: str | None = ""
+    text: TextOptions | None = None
 
 
 class SpontaneousFileUploadFeature(BaseModel):
-    enabled: Optional[bool] = None
-    accept: Optional[Union[List[str], Dict[str, List[str]]]] = None
-    max_files: Optional[int] = None
-    max_size_mb: Optional[int] = None
+    enabled: bool | None = None
+    accept: list[str] | dict[str, list[str]] | None = None
+    max_files: int | None = None
+    max_size_mb: int | None = None
 
 
 class AudioFeature(BaseModel):
@@ -307,7 +298,7 @@ class McpStreamableHttpFeature(BaseModel):
 
 class McpStdioFeature(BaseModel):
     enabled: bool = True
-    allowed_executables: Optional[list[str]] = None
+    allowed_executables: list[str] | None = None
 
 
 class SlackFeature(BaseModel):
@@ -324,8 +315,8 @@ class McpFeature(BaseModel):
 
 
 class FeaturesSettings(BaseModel):
-    spontaneous_file_upload: Optional[SpontaneousFileUploadFeature] = None
-    audio: Optional[AudioFeature] = Field(default_factory=AudioFeature)
+    spontaneous_file_upload: SpontaneousFileUploadFeature | None = None
+    audio: AudioFeature | None = Field(default_factory=AudioFeature)
     mcp: McpFeature = Field(default_factory=McpFeature)
     slack: SlackFeature = Field(default_factory=SlackFeature)
     latex: bool = False
@@ -343,110 +334,112 @@ class HeaderLink(BaseModel):
     name: str
     icon_url: str
     url: str
-    display_name: Optional[str] = None
-    target: Optional[Literal["_blank", "_self", "_parent", "_top"]] = None
+    display_name: str | None = None
+    target: Literal["_blank", "_self", "_parent", "_top"] | None = None
 
 
 class UISettings(BaseModel):
     name: str
     description: str = ""
     cot: Literal["hidden", "tool_call", "full"] = "full"
-    default_theme: Optional[Literal["light", "dark"]] = "dark"
-    language: Optional[str] = None
-    layout: Optional[Literal["default", "wide"]] = "default"
-    default_sidebar_state: Optional[Literal["open", "closed", "hidden"]] = "open"
-    chat_settings_location: Optional[Literal["message_composer", "sidebar"]] = (
+    default_theme: Literal["light", "dark"] | None = "dark"
+    language: str | None = None
+    layout: Literal["default", "wide"] | None = "default"
+    default_sidebar_state: Literal["open", "closed", "hidden"] | None = "open"
+    chat_settings_location: Literal["message_composer", "sidebar"] | None = (
         "message_composer"
     )
     default_chat_settings_open: bool = False
     confirm_new_chat: bool = True
-    github: Optional[str] = None
-    custom_css: Optional[str] = None
-    custom_css_attributes: Optional[str] = ""
-    custom_js: Optional[str] = None
+    github: str | None = None
+    custom_css: str | None = None
+    custom_css_attributes: str | None = ""
+    custom_js: str | None = None
 
-    alert_style: Optional[Literal["classic", "modern"]] = "classic"
-    custom_js_attributes: Optional[str] = "defer"
-    login_page_image: Optional[str] = None
-    login_page_image_filter: Optional[str] = None
-    login_page_image_dark_filter: Optional[str] = None
+    alert_style: Literal["classic", "modern"] | None = "classic"
+    custom_js_attributes: str | None = "defer"
+    login_page_image: str | None = None
+    login_page_image_filter: str | None = None
+    login_page_image_dark_filter: str | None = None
 
-    custom_meta_url: Optional[str] = None
-    custom_meta_image_url: Optional[str] = None
-    logo_file_url: Optional[str] = None
-    default_avatar_file_url: Optional[str] = None
-    avatar_size: Optional[int] = None
-    custom_build: Optional[str] = None
-    header_links: Optional[List[HeaderLink]] = None
+    custom_meta_url: str | None = None
+    custom_meta_image_url: str | None = None
+    logo_file_url: str | None = None
+    default_avatar_file_url: str | None = None
+    avatar_size: int | None = None
+    custom_build: str | None = None
+    header_links: list[HeaderLink] | None = None
 
 
 class CodeSettings(BaseModel):
     # App action functions
-    action_callbacks: Dict[str, Callable[["Action"], Any]]
+    action_callbacks: dict[str, Callable[["Action"], Any]]
 
     # Module object loaded from the module_name
     module: Any = None
 
     # App life cycle callbacks
-    on_app_startup: Optional[Callable[[], Union[None, Awaitable[None]]]] = None
-    on_app_shutdown: Optional[Callable[[], Union[None, Awaitable[None]]]] = None
+    on_app_startup: Callable[[], None | Awaitable[None]] | None = None
+    on_app_shutdown: Callable[[], None | Awaitable[None]] | None = None
 
     # Session life cycle callbacks
-    on_logout: Optional[Callable[["Request", "Response"], Any]] = None
-    on_stop: Optional[Callable[[], Any]] = None
-    on_chat_start: Optional[Callable[[], Any]] = None
-    on_chat_end: Optional[Callable[[], Any]] = None
-    on_chat_resume: Optional[Callable[["ThreadDict"], Any]] = None
-    on_message: Optional[Callable[["Message"], Any]] = None
-    on_feedback: Optional[Callable[["Feedback"], Any]] = None
-    on_slack_reaction_added: Optional[Callable[[Dict[str, Any]], Any]] = None
-    on_audio_start: Optional[Callable[[], Any]] = None
-    on_audio_chunk: Optional[Callable[["InputAudioChunk"], Any]] = None
-    on_audio_end: Optional[Callable[[], Any]] = None
-    on_mcp_connect: Optional[Callable] = None
-    on_mcp_disconnect: Optional[Callable] = None
-    on_settings_edit: Optional[Callable[[Dict[str, Any]], Any]] = None
-    on_settings_update: Optional[Callable[[Dict[str, Any]], Any]] = None
-    set_chat_profiles: Optional[
-        Callable[[Optional["User"], Optional["str"]], Awaitable[List["ChatProfile"]]]
-    ] = None
-    set_starters: Optional[
-        Callable[[Optional["User"], Optional["str"]], Awaitable[List["Starter"]]]
-    ] = None
-    set_starter_categories: Optional[
+    on_logout: Callable[["Request", "Response"], Any] | None = None
+    on_stop: Callable[[], Any] | None = None
+    on_chat_start: Callable[[], Any] | None = None
+    on_chat_end: Callable[[], Any] | None = None
+    on_chat_resume: Callable[["ThreadDict"], Any] | None = None
+    on_message: Callable[["Message"], Any] | None = None
+    on_feedback: Callable[["Feedback"], Any] | None = None
+    on_slack_reaction_added: Callable[[dict[str, Any]], Any] | None = None
+    on_audio_start: Callable[[], Any] | None = None
+    on_audio_chunk: Callable[["InputAudioChunk"], Any] | None = None
+    on_audio_end: Callable[[], Any] | None = None
+    on_mcp_connect: Callable | None = None
+    on_mcp_disconnect: Callable | None = None
+    on_settings_edit: Callable[[dict[str, Any]], Any] | None = None
+    on_settings_update: Callable[[dict[str, Any]], Any] | None = None
+    set_chat_profiles: (
+        Callable[[Optional["User"], str | None], Awaitable[list["ChatProfile"]]] | None
+    ) = None
+    set_starters: (
+        Callable[[Optional["User"], str | None], Awaitable[list["Starter"]]] | None
+    ) = None
+    set_starter_categories: (
         Callable[
-            [Optional["User"], Optional["str"], Optional["str"]],
-            Awaitable[List["StarterCategory"]],
+            [Optional["User"], str | None, str | None],
+            Awaitable[list["StarterCategory"]],
         ]
-    ] = None
-    on_shared_thread_view: Optional[
-        Callable[["ThreadDict", Optional["User"]], Awaitable[bool]]
-    ] = None
+        | None
+    ) = None
+    on_shared_thread_view: (
+        Callable[["ThreadDict", Optional["User"]], Awaitable[bool]] | None
+    ) = None
     # Auth callbacks
-    password_auth_callback: Optional[
-        Callable[[str, str], Awaitable[Optional["User"]]]
-    ] = None
-    header_auth_callback: Optional[Callable[[Headers], Awaitable[Optional["User"]]]] = (
+    password_auth_callback: Callable[[str, str], Awaitable[Optional["User"]]] | None = (
         None
     )
-    oauth_callback: Optional[
-        Callable[[str, str, Dict[str, str], "User"], Awaitable[Optional["User"]]]
-    ] = None
+    header_auth_callback: Callable[[Headers], Awaitable[Optional["User"]]] | None = None
+    oauth_callback: (
+        Callable[
+            [str, str, dict[str, str], "User", str | None], Awaitable[Optional["User"]]
+        ]
+        | None
+    ) = None
 
     # Helpers
-    on_window_message: Optional[Callable[[str], Any]] = None
-    author_rename: Optional[Callable[[str], Awaitable[str]]] = None
-    data_layer: Optional[Callable[[], BaseDataLayer]] = None
+    on_window_message: Callable[[str], Any] | None = None
+    author_rename: Callable[[str], Awaitable[str]] | None = None
+    data_layer: Callable[[], BaseDataLayer] | None = None
 
 
 class ProjectSettings(BaseModel):
-    allow_origins: List[str] = Field(default_factory=lambda: ["*"])
+    allow_origins: list[str] = Field(default_factory=lambda: ["*"])
     # Socket.io client transports option
-    transports: Optional[List[str]] = None
+    transports: list[str] | None = None
     # List of environment variables to be provided by each user to use the app. If empty, no environment variables will be asked to the user.
-    user_env: Optional[List[str]] = None
+    user_env: list[str] | None = None
     # Path to the local langchain cache database
-    lc_cache_path: Optional[str] = None
+    lc_cache_path: str | None = None
     # Path to the local chat db
     # Duration (in seconds) during which the session is saved when the connection is lost
     session_timeout: int = 300
@@ -455,17 +448,17 @@ class ProjectSettings(BaseModel):
     # Enable third parties caching (e.g LangChain cache)
     cache: bool = False
     # Whether to persist user environment variables (API keys) to the database
-    persist_user_env: Optional[bool] = False
+    persist_user_env: bool | None = False
     # Whether to mask user environment variables (API keys) in the UI with password type
-    mask_user_env: Optional[bool] = False
+    mask_user_env: bool | None = False
 
 
 class ChainlitConfigOverrides(BaseModel):
     """Configuration overrides that can be applied to specific chat profiles."""
 
-    ui: Optional[UISettings] = None
-    features: Optional[FeaturesSettings] = None
-    project: Optional[ProjectSettings] = None
+    ui: UISettings | None = None
+    features: FeaturesSettings | None = None
+    project: ProjectSettings | None = None
 
 
 class ChainlitConfig(BaseSettings):

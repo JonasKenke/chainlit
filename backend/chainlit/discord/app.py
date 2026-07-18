@@ -4,7 +4,7 @@ import re
 import uuid
 from datetime import datetime
 from io import BytesIO
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from discord.abc import MessageableChannel
@@ -66,8 +66,8 @@ class DiscordEmitter(BaseChainlitEmitter):
             return
 
         persisted_file = self.session.files.get(element_dict.get("chainlitKey") or "")
-        file: Optional[Union[BytesIO, str]] = None
-        mime: Optional[str] = None
+        file: BytesIO | str | None = None
+        mime: str | None = None
 
         if persisted_file:
             file = str(persisted_file["path"])
@@ -143,12 +143,12 @@ def init_discord_context(
     return context
 
 
-users_by_discord_id: Dict[int, Union[User, PersistedUser]] = {}
+users_by_discord_id: dict[int, User | PersistedUser] = {}
 
 USER_PREFIX = "discord_"
 
 
-async def get_user(discord_user: Union[discord.User, discord.Member]):
+async def get_user(discord_user: discord.User | discord.Member):
     if discord_user.id in users_by_discord_id:
         return users_by_discord_id[discord_user.id]
 
@@ -181,7 +181,7 @@ async def download_discord_file(url: str):
 
 
 async def download_discord_files(
-    session: HTTPSession, attachments: List[discord.Attachment]
+    session: HTTPSession, attachments: list[discord.Attachment]
 ):
     download_coros = [
         download_discord_file(attachment.url) for attachment in attachments

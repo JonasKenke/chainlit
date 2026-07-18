@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import mimetypes
 import re
 import shutil
 import uuid
+from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, Deque, Dict, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Literal
 
 import aiofiles
 
@@ -39,7 +43,7 @@ class McpSession:
     """
 
     name: str
-    client: "ClientSession"
+    client: ClientSession
     task: asyncio.Task
     stop_event: asyncio.Event = field(default_factory=asyncio.Event)
 
@@ -84,7 +88,7 @@ class JSONEncoderIgnoreNonSerializable(json.JSONEncoder):
             return None
 
 
-def clean_metadata(metadata: Dict, max_size: int = 1048576):
+def clean_metadata(metadata: dict, max_size: int = 1048576):
     cleaned_metadata = json.loads(
         json.dumps(metadata, cls=JSONEncoderIgnoreNonSerializable, ensure_ascii=False)
     )
@@ -102,9 +106,9 @@ def clean_metadata(metadata: Dict, max_size: int = 1048576):
 class BaseSession:
     """Base object."""
 
-    thread_id_to_resume: Optional[str] = None
+    thread_id_to_resume: str | None = None
     client_type: ClientType
-    current_task: Optional[asyncio.Task] = None
+    current_task: asyncio.Task | None = None
     chat_started: bool = False
 
     def __init__(
@@ -113,17 +117,17 @@ class BaseSession:
         id: str,
         client_type: ClientType,
         # Thread id
-        thread_id: Optional[str],
+        thread_id: str | None,
         # Logged-in user information
-        user: Optional[Union["User", "PersistedUser"]],
+        user: User | PersistedUser | None,
         # Logged-in user token
-        token: Optional[str],
+        token: str | None,
         # User specific environment variables. Empty if no user environment variables are required.
-        user_env: Optional[Dict[str, str]],
+        user_env: dict[str, str] | None,
         # WSGI environment variables for the connection request
-        environ: Optional[dict[str, Any]] = None,
+        environ: dict[str, Any] | None = None,
         # Chat profile selected before the session was created
-        chat_profile: Optional[str] = None,
+        chat_profile: str | None = None,
     ):
         if thread_id:
             self.thread_id_to_resume = thread_id
@@ -137,12 +141,12 @@ class BaseSession:
         self.environ = environ or {}
         self.chat_profile = chat_profile
 
-        self.files: Dict[str, FileDict] = {}
-        self.files_spec: Dict[str, AskFileSpec] = {}
+        self.files: dict[str, FileDict] = {}
+        self.files_spec: dict[str, AskFileSpec] = {}
 
         self.id = id
 
-        self.chat_settings: Dict[str, Any] = {}
+        self.chat_settings: dict[str, Any] = {}
 
     @property
     def files_dir(self):
@@ -154,8 +158,8 @@ class BaseSession:
         self,
         name: str,
         mime: str,
-        path: Optional[str] = None,
-        content: Optional[Union[bytes, str]] = None,
+        path: str | None = None,
+        content: bytes | str | None = None,
     ) -> FileReference:
         if not path and not content:
             raise ValueError(
@@ -200,11 +204,11 @@ class BaseSession:
 
         return {"id": file_id}
 
-    def to_persistable(self) -> Dict:
+    def to_persistable(self) -> dict:
         from chainlit.config import config
         from chainlit.user_session import user_sessions
 
-        user_session = user_sessions.get(self.id) or {}  # type: Dict
+        user_session = user_sessions.get(self.id) or {}  # type: dict
         user_session["chat_settings"] = self.chat_settings
         user_session["chat_profile"] = self.chat_profile
         user_session["client_type"] = self.client_type
@@ -228,14 +232,14 @@ class HTTPSession(BaseSession):
         id: str,
         client_type: ClientType,
         # Thread id
-        thread_id: Optional[str] = None,
+        thread_id: str | None = None,
         # Logged-in user information
-        user: Optional[Union["User", "PersistedUser"]] = None,
+        user: User | PersistedUser | None = None,
         # Logged-in user token
-        token: Optional[str] = None,
-        user_env: Optional[Dict[str, str]] = None,
+        token: str | None = None,
+        user_env: dict[str, str] | None = None,
         # WSGI environment variables for the connection request
-        environ: Optional[dict[str, Any]] = None,
+        environ: dict[str, Any] | None = None,
     ):
         super().__init__(
             id=id,
@@ -253,7 +257,7 @@ class HTTPSession(BaseSession):
             shutil.rmtree(self.files_dir)
 
 
-ThreadQueue = Deque[tuple[Callable, object, tuple, Dict]]
+ThreadQueue = deque[tuple[Callable, object, tuple, dict]]
 
 
 class WebsocketSession(BaseSession):
@@ -281,20 +285,20 @@ class WebsocketSession(BaseSession):
         # Function to emit to the client
         emit: Callable[[str, Any], None],
         # Function to emit to the client and wait for a response
-        emit_call: Callable[[Literal["ask", "call_fn"], Any, Optional[int]], Any],
+        emit_call: Callable[[Literal["ask", "call_fn"], Any, int | None], Any],
         # User specific environment variables. Empty if no user environment variables are required.
-        user_env: Dict[str, str],
+        user_env: dict[str, str],
         client_type: ClientType,
         # WSGI environment variables for the connection request
-        environ: Optional[dict[str, Any]] = None,
+        environ: dict[str, Any] | None = None,
         # Thread id
-        thread_id: Optional[str] = None,
+        thread_id: str | None = None,
         # Logged-in user information
-        user: Optional[Union["User", "PersistedUser"]] = None,
+        user: User | PersistedUser | None = None,
         # Logged-in user token
-        token: Optional[str] = None,
+        token: str | None = None,
         # Chat profile selected before the session was created
-        chat_profile: Optional[str] = None,
+        chat_profile: str | None = None,
     ):
         super().__init__(
             id=id,
@@ -313,7 +317,7 @@ class WebsocketSession(BaseSession):
 
         self.restored = False
 
-        self.thread_queues: Dict[str, ThreadQueue] = {}
+        self.thread_queues: dict[str, ThreadQueue] = {}
         self.mcp_sessions = {}
 
         match = (
@@ -330,7 +334,7 @@ class WebsocketSession(BaseSession):
         ws_sessions_id[self.id] = self
         ws_sessions_sid[socket_id] = self
 
-    def get_config(self) -> "ChainlitConfig":
+    def get_config(self) -> ChainlitConfig:
         """
         Return the config for this session: overridden if chat profile exists and has overrides, else global config.
         """
@@ -348,7 +352,11 @@ class WebsocketSession(BaseSession):
             import asyncio
 
             try:
-                profiles = asyncio.get_event_loop().run_until_complete(
+                try:
+                    loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                profiles = loop.run_until_complete(
                     global_config.code.set_chat_profiles(self.user, self.language)
                 )
                 current_profile = next(
@@ -415,5 +423,5 @@ class WebsocketSession(BaseSession):
         raise ValueError("Session not found")
 
 
-ws_sessions_sid: Dict[str, WebsocketSession] = {}
-ws_sessions_id: Dict[str, WebsocketSession] = {}
+ws_sessions_sid: dict[str, WebsocketSession] = {}
+ws_sessions_id: dict[str, WebsocketSession] = {}

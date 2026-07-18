@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from datetime import date
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import Field
 from pydantic.dataclasses import dataclass
@@ -13,9 +13,9 @@ class InputWidget:
     id: str
     label: str
     initial: Any = None
-    tooltip: Optional[str] = None
-    description: Optional[str] = None
-    disabled: Optional[bool] = False
+    tooltip: str | None = None
+    description: str | None = None
+    disabled: bool | None = False
 
     def __post_init__(
         self,
@@ -24,7 +24,7 @@ class InputWidget:
             raise ValueError("Must provide key and label to load InputWidget")
 
     @abstractmethod
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         pass
 
 
@@ -35,7 +35,7 @@ class Switch(InputWidget):
     type: InputWidgetType = "switch"
     initial: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "type": self.type,
             "id": self.id,
@@ -57,7 +57,7 @@ class Slider(InputWidget):
     max: float = 10
     step: float = 1
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "type": self.type,
             "id": self.id,
@@ -77,11 +77,11 @@ class Select(InputWidget):
     """Useful to create a select input."""
 
     type: InputWidgetType = "select"
-    initial: Optional[str] = None
-    initial_index: Optional[int] = None
-    initial_value: Optional[str] = None
-    values: List[str] = Field(default_factory=list)
-    items: Dict[str, str] = Field(default_factory=dict)
+    initial: str | None = None
+    initial_index: int | None = None
+    initial_value: str | None = None
+    values: list[str] = Field(default_factory=list)
+    items: dict[str, str] = Field(default_factory=dict)
 
     def __post_init__(
         self,
@@ -111,7 +111,7 @@ class Select(InputWidget):
                 else self.initial_value
             )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "type": self.type,
             "id": self.id,
@@ -131,11 +131,11 @@ class TextInput(InputWidget):
     """Useful to create a text input."""
 
     type: InputWidgetType = "textinput"
-    initial: Optional[str] = None
-    placeholder: Optional[str] = None
+    initial: str | None = None
+    placeholder: str | None = None
     multiline: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "type": self.type,
             "id": self.id,
@@ -154,10 +154,10 @@ class NumberInput(InputWidget):
     """Useful to create a number input."""
 
     type: InputWidgetType = "numberinput"
-    initial: Optional[float] = None
-    placeholder: Optional[str] = None
+    initial: float | None = None
+    placeholder: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "type": self.type,
             "id": self.id,
@@ -175,10 +175,10 @@ class Tags(InputWidget):
     """Useful to create an input for an array of strings."""
 
     type: InputWidgetType = "tags"
-    initial: List[str] = Field(default_factory=list)
-    values: List[str] = Field(default_factory=list)
+    initial: list[str] = Field(default_factory=list)
+    values: list[str] = Field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "type": self.type,
             "id": self.id,
@@ -195,9 +195,9 @@ class MultiSelect(InputWidget):
     """Useful to create a multi-select input."""
 
     type: InputWidgetType = "multiselect"
-    initial: List[str] = Field(default_factory=list)
-    values: List[str] = Field(default_factory=list)
-    items: Dict[str, str] = Field(default_factory=dict)
+    initial: list[str] = Field(default_factory=list)
+    values: list[str] = Field(default_factory=list)
+    items: dict[str, str] = Field(default_factory=dict)
 
     def __post_init__(
         self,
@@ -215,7 +215,7 @@ class MultiSelect(InputWidget):
         if self.values:
             self.items = {value: value for value in self.values}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "type": self.type,
             "id": self.id,
@@ -237,7 +237,7 @@ class Checkbox(InputWidget):
     type: InputWidgetType = "checkbox"
     initial: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "type": self.type,
             "id": self.id,
@@ -254,11 +254,11 @@ class RadioGroup(InputWidget):
     """Useful to create a radio button input."""
 
     type: InputWidgetType = "radio"
-    initial: Optional[str] = None
-    initial_index: Optional[int] = None
-    initial_value: Optional[str] = None
-    values: List[str] = Field(default_factory=list)
-    items: Dict[str, str] = Field(default_factory=dict)
+    initial: str | None = None
+    initial_index: int | None = None
+    initial_value: str | None = None
+    values: list[str] = Field(default_factory=list)
+    items: dict[str, str] = Field(default_factory=dict)
 
     def __post_init__(
         self,
@@ -288,7 +288,7 @@ class RadioGroup(InputWidget):
                 else self.initial_value
             )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "type": self.type,
             "id": self.id,

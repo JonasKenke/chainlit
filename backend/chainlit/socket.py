@@ -1,10 +1,9 @@
 import asyncio
 import json
-from typing import Any, Dict, Literal, Optional, Tuple, TypedDict, Union
+from typing import Any, Literal, TypeAlias, TypedDict
 from urllib.parse import unquote
 
 from starlette.requests import cookie_parser
-from typing_extensions import TypeAlias
 
 from chainlit.auth import (
     get_current_user,
@@ -72,7 +71,7 @@ def restore_existing_session(
     return False
 
 
-async def persist_user_session(thread_id: str, metadata: Dict):
+async def persist_user_session(thread_id: str, metadata: dict):
     if data_layer := get_data_layer():
         await data_layer.update_thread(thread_id=thread_id, metadata=metadata)
 
@@ -118,7 +117,7 @@ def load_user_env(user_env):
     return user_env_dict
 
 
-def _get_token_from_cookie(environ: WSGIEnvironment) -> Optional[str]:
+def _get_token_from_cookie(environ: WSGIEnvironment) -> str | None:
     if cookie_header := environ.get("HTTP_COOKIE", None):
         cookies = cookie_parser(cookie_header)
         return get_token_from_cookies(cookies)
@@ -126,14 +125,14 @@ def _get_token_from_cookie(environ: WSGIEnvironment) -> Optional[str]:
     return None
 
 
-def _get_token(environ: WSGIEnvironment) -> Optional[str]:
+def _get_token(environ: WSGIEnvironment) -> str | None:
     """Take WSGI environ, return access token."""
     return _get_token_from_cookie(environ)
 
 
 async def _authenticate_connection(
     environ: WSGIEnvironment,
-) -> Union[Tuple[Union[User, PersistedUser], str], Tuple[None, None]]:
+) -> tuple[User | PersistedUser, str] | tuple[None, None]:
     if token := _get_token(environ):
         user = await get_current_user(token=token)
         if user:
@@ -488,7 +487,7 @@ async def audio_end(sid):
 
 
 @sio.on("chat_settings_change")
-async def change_settings(sid, settings: Dict[str, Any]):
+async def change_settings(sid, settings: dict[str, Any]):
     """Handle change settings submit from the UI."""
     context = init_ws_context(sid)
 
@@ -500,7 +499,7 @@ async def change_settings(sid, settings: Dict[str, Any]):
 
 
 @sio.on("chat_settings_edit")
-async def edit_settings(sid, settings: Dict[str, Any]):
+async def edit_settings(sid, settings: dict[str, Any]):
     """Handle change settings edit from the UI (on the fly)."""
     init_ws_context(sid)
 

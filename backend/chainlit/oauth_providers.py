@@ -1,7 +1,6 @@
 import base64
 import os
 import urllib.parse
-from typing import Dict, List, Optional, Tuple
 
 import httpx
 from fastapi import HTTPException
@@ -14,12 +13,12 @@ ACCESS_TOKEN_MISSING = "Access token missing in the response"
 
 class OAuthProvider:
     id: str
-    env: List[str]
+    env: list[str]
     client_id: str
     client_secret: str
     authorize_url: str
-    authorize_params: Dict[str, str]
-    default_prompt: Optional[str] = None
+    authorize_params: dict[str, str]
+    default_prompt: str | None = None
 
     def is_configured(self):
         return all([os.environ.get(env) for env in self.env])
@@ -30,7 +29,7 @@ class OAuthProvider:
     async def get_token(self, code: str, url: str) -> str:
         raise NotImplementedError
 
-    async def get_user_info(self, token: str) -> Tuple[Dict[str, str], User]:
+    async def get_user_info(self, token: str) -> tuple[dict[str, str], User]:
         raise NotImplementedError
 
     def get_env_prefix(self) -> str:
@@ -38,7 +37,7 @@ class OAuthProvider:
 
         return self.id.replace("-", "_").upper()
 
-    def get_prompt(self) -> Optional[str]:
+    def get_prompt(self) -> str | None:
         """Return OAuth prompt param."""
         if prompt := os.environ.get(f"OAUTH_{self.get_env_prefix()}_PROMPT"):
             return prompt
@@ -72,7 +71,7 @@ class GithubOAuthProvider(OAuthProvider):
         if prompt := self.get_prompt():
             self.authorize_params["prompt"] = prompt
 
-    async def get_raw_token_response(self, code: str, url: str) -> Dict[str, List[str]]:
+    async def get_raw_token_response(self, code: str, url: str) -> dict[str, list[str]]:
         payload = {
             "client_id": self.client_id,
             "client_secret": self.client_secret,
@@ -845,7 +844,7 @@ providers = [
 ]
 
 
-def get_oauth_provider(provider: str) -> Optional[OAuthProvider]:
+def get_oauth_provider(provider: str) -> OAuthProvider | None:
     for p in providers:
         if p.id == provider:
             return p

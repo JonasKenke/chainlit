@@ -6,7 +6,6 @@ in the chat composer.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 from dataclasses_json import DataClassJsonMixin
 
@@ -25,8 +24,8 @@ class ModeOption(DataClassJsonMixin):
 
     id: str
     name: str
-    description: Optional[str] = None
-    icon: Optional[str] = None
+    description: str | None = None
+    icon: str | None = None
     default: bool = False
 
 
@@ -45,16 +44,16 @@ class Mode(DataClassJsonMixin):
 
     id: str
     name: str
-    options: List[ModeOption] = field(default_factory=list)
+    options: list[ModeOption] = field(default_factory=list)
 
-    def get_default_option(self) -> Optional[ModeOption]:
+    def get_default_option(self) -> ModeOption | None:
         """Get the default option for this mode, or the first option if none is default."""
         for option in self.options:
             if option.default:
                 return option
         return self.options[0] if self.options else None
 
-    def get_option_by_id(self, option_id: str) -> Optional[ModeOption]:
+    def get_option_by_id(self, option_id: str) -> ModeOption | None:
         """Get an option by its ID."""
         for option in self.options:
             if option.id == option_id:

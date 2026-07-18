@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any
 
 import jwt as pyjwt
 
@@ -8,12 +8,12 @@ from chainlit.config import config
 from chainlit.user import User
 
 
-def get_jwt_secret() -> Optional[str]:
+def get_jwt_secret() -> str | None:
     return os.environ.get("CHAINLIT_AUTH_SECRET")
 
 
 def create_jwt(data: User) -> str:
-    to_encode: Dict[str, Any] = data.to_dict()
+    to_encode: dict[str, Any] = data.to_dict()
     to_encode.update(
         {
             "exp": datetime.now(timezone.utc)

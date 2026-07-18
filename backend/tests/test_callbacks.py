@@ -86,16 +86,14 @@ async def test_oauth_callback(test_config: config.ChainlitConfig):
 
         # Test that the callback is properly registered
         assert test_config.code.oauth_callback is not None
-
         # Test the wrapped function with valid data
-        result = await test_config.code.oauth_callback(
+        result = await test_config.code.oauth_callback(  # type: ignore[call-arg]
             "google", "valid_token", {}, User(identifier="default_user")
         )
         assert isinstance(result, User)
         assert result.identifier == "oauth_user"
-
         # Test with invalid data
-        result = await test_config.code.oauth_callback(
+        result = await test_config.code.oauth_callback(  # type: ignore[call-arg]
             "facebook", "invalid_token", {}, User(identifier="default_user")
         )
         assert result is None
