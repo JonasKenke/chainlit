@@ -422,7 +422,7 @@ class LangchainTracer(AsyncBaseTracer, GenerationHelper, FinalStreamHelper):
 
         return None
 
-    async def on_llm_new_token(
+    async def on_llm_new_token(  # type: ignore[override]
         self,
         token: str,
         *,
