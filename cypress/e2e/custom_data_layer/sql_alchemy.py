@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 import chainlit as cl
 from chainlit.data.sql_alchemy import SQLAlchemyDataLayer
@@ -31,7 +30,7 @@ async def handle_message():
 
 
 @cl.password_auth_callback
-def auth_callback(username: str, password: str) -> Optional[cl.User]:
+def auth_callback(username: str, password: str) -> cl.User | None:
     if (username, password) == ("admin", "admin"):
         return cl.User(identifier="admin")
     else:

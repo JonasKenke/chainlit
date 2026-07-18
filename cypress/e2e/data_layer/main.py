@@ -1,7 +1,7 @@
 import os
 import os.path
 import pickle
-from typing import Dict, List, Optional
+from typing import Optional
 
 import chainlit as cl
 import chainlit.data as cl_data
@@ -114,10 +114,10 @@ class TestDataLayer(cl_data.BaseDataLayer):
     async def update_thread(
         self,
         thread_id: str,
-        name: Optional[str] = None,
-        user_id: Optional[str] = None,
-        metadata: Optional[Dict] = None,
-        tags: Optional[List[str]] = None,
+        name: str | None = None,
+        user_id: str | None = None,
+        metadata: dict | None = None,
+        tags: list[str] | None = None,
     ):
         thread = next((t for t in thread_history if t["id"] == thread_id), None)
         if thread:
@@ -204,7 +204,7 @@ class TestDataLayer(cl_data.BaseDataLayer):
         return next((e for e in ELEMENTS_STORAGE if e["id"] == element_id), None)
 
     @queue_until_user_message()
-    async def delete_element(self, element_id: str, thread_id: Optional[str] = None):
+    async def delete_element(self, element_id: str, thread_id: str | None = None):
         pass
 
     @queue_until_user_message()
@@ -215,7 +215,7 @@ class TestDataLayer(cl_data.BaseDataLayer):
     async def delete_step(self, step_id: str):
         pass
 
-    async def get_favorite_steps(self, user_id: str) -> List["StepDict"]:
+    async def get_favorite_steps(self, user_id: str) -> list["StepDict"]:
         return []
 
     async def build_debug_url(self) -> str:
@@ -257,7 +257,7 @@ async def handle_message():
 
 
 @cl.password_auth_callback
-def auth_callback(username: str, password: str) -> Optional[cl.User]:
+def auth_callback(username: str, password: str) -> cl.User | None:
     if (username, password) == ("user1", "user1"):
         return cl.User(identifier="user1")
     elif (username, password) == ("user2", "user2"):

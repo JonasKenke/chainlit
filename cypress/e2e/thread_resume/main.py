@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Optional
+from typing import Optional
 
 import chainlit as cl
 import chainlit.data as cl_data
@@ -20,7 +20,7 @@ os.environ["CHAINLIT_AUTH_SECRET"] = "SUPER_SECRET"  # nosec B105
 now = utc_now()
 
 # Simple in-memory persistence for threads per user
-THREADS: Dict[str, List[ThreadDict]] = {}
+THREADS: dict[str, list[ThreadDict]] = {}
 
 
 class MemoryDataLayer(cl_data.BaseDataLayer):
@@ -52,7 +52,7 @@ class MemoryDataLayer(cl_data.BaseDataLayer):
     ) -> Optional["ElementDict"]:
         pass
 
-    async def delete_element(self, element_id: str, thread_id: Optional[str] = None):
+    async def delete_element(self, element_id: str, thread_id: str | None = None):
         pass
 
     async def create_step(self, step_dict: "StepDict"):
@@ -81,7 +81,7 @@ class MemoryDataLayer(cl_data.BaseDataLayer):
             pageInfo=PageInfo(hasNextPage=False, startCursor=None, endCursor=None),
         )
 
-    async def get_thread(self, thread_id: str) -> "Optional[ThreadDict]":
+    async def get_thread(self, thread_id: str) -> "ThreadDict | None":
         for threads in THREADS.values():
             for t in threads:
                 if t["id"] == thread_id:
@@ -91,10 +91,10 @@ class MemoryDataLayer(cl_data.BaseDataLayer):
     async def update_thread(
         self,
         thread_id: str,
-        name: Optional[str] = None,
-        user_id: Optional[str] = None,
-        metadata: Optional[Dict] = None,
-        tags: Optional[List[str]] = None,
+        name: str | None = None,
+        user_id: str | None = None,
+        metadata: dict | None = None,
+        tags: list[str] | None = None,
     ):
         user_threads = THREADS.setdefault(user_id or "", [])
         thr = next((t for t in user_threads if t["id"] == thread_id), None)
@@ -115,7 +115,7 @@ class MemoryDataLayer(cl_data.BaseDataLayer):
         if tags is not None:
             thr["tags"] = tags
 
-    async def get_favorite_steps(self, user_id: str) -> List["StepDict"]:
+    async def get_favorite_steps(self, user_id: str) -> list["StepDict"]:
         return []
 
     async def build_debug_url(self) -> str:
@@ -131,7 +131,7 @@ def data_layer():
 
 
 @cl.password_auth_callback
-def auth(username: str, password: str) -> Optional[cl.User]:
+def auth(username: str, password: str) -> cl.User | None:
     if (username, password) in [("alice", "a"), ("bob", "b")]:
         return cl.PersistedUser(id=username, createdAt=now, identifier=username)
     return None

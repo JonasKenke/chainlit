@@ -1,10 +1,8 @@
-from typing import Optional
-
 import chainlit as cl
 
 
 @cl.set_starter_categories
-async def starter_categories(user: Optional[cl.User] = None):
+async def starter_categories(user: cl.User | None = None):
     return [
         cl.StarterCategory(
             label="Creative",

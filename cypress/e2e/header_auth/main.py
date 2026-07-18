@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 import chainlit as cl
 
@@ -7,7 +6,7 @@ os.environ["CHAINLIT_AUTH_SECRET"] = "SUPER_SECRET"  # nosec B105
 
 
 @cl.header_auth_callback
-async def header_auth_callback(headers) -> Optional[cl.User]:
+async def header_auth_callback(headers) -> cl.User | None:
     if headers.get("test-header"):
         return cl.User(identifier="admin")
     else:
